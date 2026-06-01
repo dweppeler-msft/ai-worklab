@@ -19,10 +19,16 @@
 <meta name="twitter:description" content="Fünf Berufe, drei Mini-Aufgaben. Entscheide, wie KI klug eingesetzt wird." />
 <script>
   (() => {
-    const param = new URLSearchParams(window.location.search).get("clawpilotTheme");
+    const params = new URLSearchParams(window.location.search);
+    const param = params.get("clawpilotTheme");
     const theme =
       param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
     document.documentElement.setAttribute("data-theme", theme);
+    let lang = params.get("lang") || localStorage.getItem("aiwl-lang");
+    if (!lang) lang = (navigator.language || "de").toLowerCase().startsWith("de") ? "de" : "en";
+    if (lang !== "de" && lang !== "en") lang = "de";
+    document.documentElement.setAttribute("lang", lang);
+    window.__AIWL_LANG = lang;
   })();
 </script>
 <style>
@@ -375,15 +381,70 @@
   <header class="brand">
     <div class="brand-mark">
       <span class="brand-dot"></span>
-      Beruf-Lab · KI im Arbeitsalltag
+      <span id="brandLabel">AI Worklab · KI im Arbeitsalltag</span>
     </div>
-    <button class="theme-toggle" id="themeBtn" aria-label="Theme wechseln">🌓 Theme</button>
+    <div style="display:flex;gap:8px;">
+      <button class="theme-toggle" id="langBtn" aria-label="Sprache / Language">🌐 <span id="langBtnLabel">EN</span></button>
+      <button class="theme-toggle" id="themeBtn" aria-label="Theme">🌓 <span id="themeBtnLabel">Theme</span></button>
+    </div>
   </header>
 
   <main id="view"></main>
 </div>
 
 <script>
+/* =========================
+   i18n: UI strings + helper
+   ========================= */
+const T = {
+  de: {
+    brand: "AI Worklab · KI im Arbeitsalltag",
+    themeLabel: "Theme",
+    langBtnLabel: "EN",
+    heroH1: "Wie verändert KI die Berufswelt?",
+    heroSub: "Such dir einen Beruf aus und löse drei Mini-Aufgaben aus dem Arbeitsalltag. Du entscheidest, wie KI klug eingesetzt wird – und siehst dann, wie es die echten Profis machen.",
+    howItWorks: "So funktioniert's:",
+    steps: ["Beruf wählen", "Aufgabe lesen – im Team überlegen", "Eure beste Antwort tippen", "Lösung & Aha-Moment aufdecken"],
+    backToHome: "← Andere:n Beruf wählen",
+    backToDay: (n) => `← ${n}s Tag`,
+    backToPerson: (n) => `Zurück zu ${n}`,
+    taskLabel: (i) => `Aufgabe ${i}`,
+    taskCount: (i, total) => `Aufgabe ${i} von ${total}`,
+    allDone: "Alle Aufgaben gelöst!",
+    allDoneText: (n) => `Du hast ${n}s Arbeitstag mitgestaltet. Probier einen anderen Beruf oder geh zurück zur Übersicht.`,
+    correct: (n) => `Richtig! So macht es ${n}`,
+    wrong: (n) => `Nicht ganz – so macht es ${n}`,
+    nextTask: "Nächste Aufgabe →",
+    pickAnother: "🎉 Anderen Beruf wählen",
+    quoteOpen: "„", quoteClose: "“"
+  },
+  en: {
+    brand: "AI Worklab · AI in everyday work",
+    themeLabel: "Theme",
+    langBtnLabel: "DE",
+    heroH1: "How is AI changing the world of work?",
+    heroSub: "Pick a profession and solve three mini-tasks from everyday work. You decide how AI is used wisely – then see how the pros do it.",
+    howItWorks: "How it works:",
+    steps: ["Pick a profession", "Read the task – discuss with your team", "Tap your best answer", "Reveal the solution & the aha moment"],
+    backToHome: "← Pick another profession",
+    backToDay: (n) => `← ${n}'s day`,
+    backToPerson: (n) => `Back to ${n}`,
+    taskLabel: (i) => `Task ${i}`,
+    taskCount: (i, total) => `Task ${i} of ${total}`,
+    allDone: "All tasks done!",
+    allDoneText: (n) => `You shaped ${n}'s workday. Try another profession or go back to the overview.`,
+    correct: (n) => `Right! Here's how ${n} does it`,
+    wrong: (n) => `Not quite – here's how ${n} does it`,
+    nextTask: "Next task →",
+    pickAnother: "🎉 Pick another profession",
+    quoteOpen: "“", quoteClose: "”"
+  }
+};
+
+let LANG = window.__AIWL_LANG || "de";
+const t = () => T[LANG];
+const tr = (field) => (field && typeof field === "object" && (field.de || field.en)) ? (field[LANG] || field.de) : field;
+
 /* =========================
    Daten: Personas + Aufgaben
    ========================= */
@@ -393,46 +454,85 @@ const PERSONAS = [
     initials: "MK",
     name: "Mia Krüger",
     age: 24,
-    role: "Kommunikationsdesignerin (B.A.)",
-    path: "Studium",
-    cluster: "Kreativ",
-    quote: "Frisch von der HAW München in eine kleine Werbeagentur. Heute: drei Kund:innen, ein Pitch, viel zu tun – und genau dafür liebt sie ihren Job.",
+    role: { de: "Kommunikationsdesignerin (B.A.)", en: "Communication Designer (B.A.)" },
+    path: { de: "Studium", en: "Degree" },
+    cluster: { de: "Kreativ", en: "Creative" },
+    quote: {
+      de: "Frisch von der HAW München in eine kleine Werbeagentur. Heute: drei Kund:innen, ein Pitch, viel zu tun – und genau dafür liebt sie ihren Job.",
+      en: "Fresh out of design school into a small ad agency. Today: three clients, one pitch, plenty to do – and that's exactly why she loves her job."
+    },
     tasks: [
       {
-        scenario: "Deine Chefin sagt am Morgen: »Heute Nachmittag haben wir den Pitch bei der Bio-Bäckerei. Bring fünf richtig starke Ideen für die Instagram-Kampagne mit.« Du willst keine 08/15-Vorschläge liefern, sondern etwas, das die Kundin wirklich überzeugt.",
-        question: "Wie nutzt du KI am klügsten?",
+        scenario: {
+          de: "Deine Chefin sagt am Morgen: »Heute Nachmittag haben wir den Pitch bei der Bio-Bäckerei. Bring fünf richtig starke Ideen für die Instagram-Kampagne mit.« Du willst keine 08/15-Vorschläge liefern, sondern etwas, das die Kundin wirklich überzeugt.",
+          en: "Your boss says in the morning: »This afternoon we have the pitch at the organic bakery. Bring five really strong ideas for the Instagram campaign.« You don't want to deliver standard stuff – you want something that truly convinces the client."
+        },
+        question: { de: "Wie nutzt du KI am klügsten?", en: "How do you use AI most wisely?" },
         options: [
-          "Die KI fragen: »Mach mir 5 Ideen für Insta-Kampagne Bio-Bäckerei.« – Antwort 1:1 in die Präsentation kopieren.",
-          "Auf KI verzichten und 90 Min mit Stift & Papier brainstormen – das ist sowieso kreativer.",
-          "Du briefst die KI wie eine Praktikantin: Zielgruppe, Markenkern, drei Kampagnen, die du gut findest – und nutzt die Vorschläge als Sprungbrett für eigene Anpassungen."
+          { de: "Die KI fragen: »Mach mir 5 Ideen für Insta-Kampagne Bio-Bäckerei.« – Antwort 1:1 in die Präsentation kopieren.",
+            en: "Ask AI: »Give me 5 ideas for an Insta campaign, organic bakery.« – Copy the answer 1:1 into the presentation." },
+          { de: "Auf KI verzichten und 90 Min mit Stift & Papier brainstormen – das ist sowieso kreativer.",
+            en: "Skip AI and brainstorm with pen and paper for 90 min – more creative anyway." },
+          { de: "Du briefst die KI wie eine Praktikantin: Zielgruppe, Markenkern, drei Kampagnen, die du gut findest – und nutzt die Vorschläge als Sprungbrett für eigene Anpassungen.",
+            en: "Brief AI like an intern: target audience, brand core, three campaigns you admire – then use the suggestions as a springboard for your own adaptations." }
         ],
         correct: 2,
-        reveal: "Mia liefert fünf richtig gute Ideen statt mittelmäßiger Schnellschüsse – und gewinnt den Pitch. Sie hat die KI **wie eine:n Junior-Kolleg:in gebrieft**: Wer ist die Zielgruppe? Was ist der Markenkern? Was gefällt mir an Marke X? Erst dann kommen brauchbare Ideen, die sie noch verfeinert hat.",
-        takeaway: "Gutes Briefing schlägt »Magic Prompt«. KI ist so gut wie der Kontext, den du ihr gibst."
+        reveal: {
+          de: "Mia liefert fünf richtig gute Ideen statt mittelmäßiger Schnellschüsse – und gewinnt den Pitch. Sie hat die KI **wie eine:n Junior-Kolleg:in gebrieft**: Wer ist die Zielgruppe? Was ist der Markenkern? Was gefällt mir an Marke X? Erst dann kommen brauchbare Ideen, die sie noch verfeinert hat.",
+          en: "Mia delivers five really strong ideas instead of mediocre quick wins – and wins the pitch. She briefed AI **like a junior colleague**: Who is the target audience? What's the brand core? What do I like about brand X? Only then come usable ideas, which she still refined."
+        },
+        takeaway: {
+          de: "Gutes Briefing schlägt »Magic Prompt«. KI ist so gut wie der Kontext, den du ihr gibst.",
+          en: "A good briefing beats a »magic prompt«. AI is only as good as the context you give it."
+        }
       },
       {
-        scenario: "Der Kunde will drei Logo-Varianten: »frisch, modern, regional«. Du willst nicht drei beliebige Schnellschüsse abliefern, sondern Vorschläge, die wirklich überzeugen.",
-        question: "Was ist der smarte Workflow?",
+        scenario: {
+          de: "Der Kunde will drei Logo-Varianten: »frisch, modern, regional«. Du willst nicht drei beliebige Schnellschüsse abliefern, sondern Vorschläge, die wirklich überzeugen.",
+          en: "The client wants three logo variants: »fresh, modern, regional«. You don't want to deliver three random shots – you want suggestions that really convince."
+        },
+        question: { de: "Was ist der smarte Workflow?", en: "What's the smart workflow?" },
         options: [
-          "Zwei Stunden im Grafikprogramm allein zeichnen – nur so wird's wirklich »deins«.",
-          "KI generiert 20 Varianten in unterschiedlichen Stilen → du wählst die drei stärksten → schärfst sie im Grafikprogramm nach und passt Farben und Typo an.",
-          "Erstes KI-Bild generieren, exportieren, beim Kunden einreichen. Schnell und fertig."
+          { de: "Zwei Stunden im Grafikprogramm allein zeichnen – nur so wird's wirklich »deins«.",
+            en: "Two hours sketching alone in a graphics tool – only that way it becomes truly »yours«." },
+          { de: "KI generiert 20 Varianten in unterschiedlichen Stilen → du wählst die drei stärksten → schärfst sie im Grafikprogramm nach und passt Farben und Typo an.",
+            en: "AI generates 20 variants in different styles → you pick the three strongest → sharpen them in your graphics tool and tweak colors and typography." },
+          { de: "Erstes KI-Bild generieren, exportieren, beim Kunden einreichen. Schnell und fertig.",
+            en: "Generate the first AI image, export it, send it to the client. Quick and done." }
         ],
         correct: 1,
-        reveal: "Mia generiert mit KI **20 Richtungen in 5 Minuten**, wählt drei aus, und nutzt die restliche Zeit für das, was Maschinen nicht können: **Markenpassung, Typografie-Feinheiten, Storytelling**.",
-        takeaway: "KI macht Quantität, du machst Qualität. Sie ersetzt nicht das Auge – sie spart dir die ersten 80%."
+        reveal: {
+          de: "Mia generiert mit KI **20 Richtungen in 5 Minuten**, wählt drei aus, und nutzt die restliche Zeit für das, was Maschinen nicht können: **Markenpassung, Typografie-Feinheiten, Storytelling**.",
+          en: "Mia generates **20 directions in 5 minutes** with AI, picks three, and uses the remaining time for what machines can't do: **brand fit, typography details, storytelling**."
+        },
+        takeaway: {
+          de: "KI macht Quantität, du machst Qualität. Sie ersetzt nicht das Auge – sie spart dir die ersten 80%.",
+          en: "AI does quantity, you do quality. It doesn't replace your eye – it saves you the first 80%."
+        }
       },
       {
-        scenario: "Der Pitch ist auf Englisch. Du sprichst gut, aber Fachbegriffe wie »Markenwiedererkennung« oder »Konversionsrate« sitzen noch nicht sicher.",
-        question: "Wie bereitest du dich am besten vor?",
+        scenario: {
+          de: "Der Pitch ist auf Englisch. Du sprichst gut, aber Fachbegriffe wie »Markenwiedererkennung« oder »Konversionsrate« sitzen noch nicht sicher.",
+          en: "The pitch is in English. You speak it well, but technical terms like »brand recognition« or »conversion rate« still feel uncertain."
+        },
+        question: { de: "Wie bereitest du dich am besten vor?", en: "How do you best prepare?" },
         options: [
-          "Slides Wort für Wort mit einem Übersetzungs-Tool übersetzen, dann ablesen.",
-          "Du lässt die KI übersetzen, prüfst Fachbegriffe selbst und übst Aussprache und schwierige Sätze laut mit einer KI als Sprachcoach.",
-          "Drauf vertrauen, dass dein Schul-Englisch reicht. Improvisation gehört dazu."
+          { de: "Slides Wort für Wort mit einem Übersetzungs-Tool übersetzen, dann ablesen.",
+            en: "Translate the slides word-for-word with a translation tool, then read them out." },
+          { de: "Du lässt die KI übersetzen, prüfst Fachbegriffe selbst und übst Aussprache und schwierige Sätze laut mit einer KI als Sprachcoach.",
+            en: "Have AI translate, double-check technical terms yourself, and practice pronunciation and tricky sentences out loud with an AI as your language coach." },
+          { de: "Drauf vertrauen, dass dein Schul-Englisch reicht. Improvisation gehört dazu.",
+            en: "Trust that your school English will be enough. Improvisation is part of it." }
         ],
         correct: 1,
-        reveal: "Mia nutzt KI nicht zum **Auswendiglernen**, sondern zum **Üben**. Sie spricht den Pitch 3x laut, lässt KI Feedback geben zu Aussprache und Tempo, und korrigiert Fachbegriffe gezielt.",
-        takeaway: "KI als persönliche Trainerin – nicht als Ersatz für eigenes Können, sondern als Verstärker."
+        reveal: {
+          de: "Mia nutzt KI nicht zum **Auswendiglernen**, sondern zum **Üben**. Sie spricht den Pitch 3x laut, lässt KI Feedback geben zu Aussprache und Tempo, und korrigiert Fachbegriffe gezielt.",
+          en: "Mia uses AI not for **memorizing**, but for **practicing**. She speaks the pitch three times out loud, lets AI give feedback on pronunciation and pacing, and corrects technical terms in a targeted way."
+        },
+        takeaway: {
+          de: "KI als persönliche Trainerin – nicht als Ersatz für eigenes Können, sondern als Verstärker.",
+          en: "AI as a personal coach – not a replacement for your own skill, but a multiplier."
+        }
       }
     ]
   },
@@ -441,46 +541,85 @@ const PERSONAS = [
     initials: "JM",
     name: "Jonas Meier",
     age: 29,
-    role: "Pflegefachkraft, Klinikum",
-    path: "Ausbildung",
-    cluster: "Sozial",
-    quote: "Frühschicht 6:30. Ich wollte Menschen helfen – nicht Formulare ausfüllen. Mal sehen, was KI heute davon möglich macht.",
+    role: { de: "Pflegefachkraft, Klinikum", en: "Registered Nurse, Hospital" },
+    path: { de: "Ausbildung", en: "Apprenticeship" },
+    cluster: { de: "Sozial", en: "Social" },
+    quote: {
+      de: "Frühschicht 6:30. Ich wollte Menschen helfen – nicht Formulare ausfüllen. Mal sehen, was KI heute davon möglich macht.",
+      en: "Early shift, 6:30 am. I wanted to help people – not fill out forms. Let's see what AI makes possible today."
+    },
     tasks: [
       {
-        scenario: "Am Ende deiner Schicht steht die Dokumentation für acht Patient:innen an. Du willst sie sorgfältig machen – und gleichzeitig genug Zeit am Bett haben, statt nur am Computer zu sitzen.",
-        question: "Was tust du?",
+        scenario: {
+          de: "Am Ende deiner Schicht steht die Dokumentation für acht Patient:innen an. Du willst sie sorgfältig machen – und gleichzeitig genug Zeit am Bett haben, statt nur am Computer zu sitzen.",
+          en: "At the end of your shift, you need to document eight patients. You want to do it carefully – and still have enough time at the bedside instead of just sitting at the computer."
+        },
+        question: { de: "Was tust du?", en: "What do you do?" },
         options: [
-          "Aus Erinnerung alles ins System tippen. Dauert 45 Min, aber so machen es alle.",
-          "Du hast während der Schicht kurze Sprachmemos aufgenommen – KI strukturiert sie pro Patient:in vor, du prüfst, ergänzt und unterschreibst.",
-          "Eine Kollegin aus der Nachtschicht bitten, das mitzumachen."
+          { de: "Aus Erinnerung alles ins System tippen. Dauert 45 Min, aber so machen es alle.",
+            en: "Type everything into the system from memory. Takes 45 min, but that's how everyone does it." },
+          { de: "Du hast während der Schicht kurze Sprachmemos aufgenommen – KI strukturiert sie pro Patient:in vor, du prüfst, ergänzt und unterschreibst.",
+            en: "During the shift you recorded short voice memos – AI pre-structures them per patient, you check, add, and sign off." },
+          { de: "Eine Kollegin aus der Nachtschicht bitten, das mitzumachen.",
+            en: "Ask a colleague from the night shift to do it together." }
         ],
         correct: 1,
-        reveal: "Jonas hat schon **während der Visite** kurze Sprachmemos aufgenommen (»Frau Berger, Wunde heilt gut, Schmerzmittel reduziert«). KI macht daraus strukturierte Doku-Einträge, **er bleibt verantwortlich** – aber spart 30 Minuten täglich.",
-        takeaway: "KI nimmt dir den Tipp-Aufwand ab. Die Verantwortung und der Check bleiben beim Menschen."
+        reveal: {
+          de: "Jonas hat schon **während der Visite** kurze Sprachmemos aufgenommen (»Frau Berger, Wunde heilt gut, Schmerzmittel reduziert«). KI macht daraus strukturierte Doku-Einträge, **er bleibt verantwortlich** – aber spart 30 Minuten täglich.",
+          en: "Jonas recorded short voice memos **during rounds** (»Mrs. Berger, wound healing well, pain meds reduced«). AI turns them into structured documentation entries, **he stays responsible** – but saves 30 minutes a day."
+        },
+        takeaway: {
+          de: "KI nimmt dir den Tipp-Aufwand ab. Die Verantwortung und der Check bleiben beim Menschen.",
+          en: "AI takes the typing load off you. Responsibility and the final check stay with the human."
+        }
       },
       {
-        scenario: "Die Tochter eines Patienten ruft an und spricht nur Türkisch. Es geht um die Medikation ihres Vaters, eine wichtige Information.",
-        question: "Wie gehst du vor?",
+        scenario: {
+          de: "Die Tochter eines Patienten ruft an und spricht nur Türkisch. Es geht um die Medikation ihres Vaters, eine wichtige Information.",
+          en: "A patient's daughter calls and only speaks Turkish. It's about her father's medication – important information."
+        },
+        question: { de: "Wie gehst du vor?", en: "How do you handle it?" },
         options: [
-          "Mit Händen, Füßen und einer Übersetzungs-App auf dem Handy versuchen, das Wichtigste rüberzubringen.",
-          "Du nutzt ein Live-Übersetzungs-Tool für das Telefonat – aber heikle medizinische Details lässt du später vom hauseigenen Dolmetscher-Dienst nochmal bestätigen.",
-          "Die komplette Diagnose von der KI ins Türkische übersetzen und ihr per Messenger schicken."
+          { de: "Mit Händen, Füßen und einer Übersetzungs-App auf dem Handy versuchen, das Wichtigste rüberzubringen.",
+            en: "Use hands, feet, and a translation app on your phone to get the most important points across." },
+          { de: "Du nutzt ein Live-Übersetzungs-Tool für das Telefonat – aber heikle medizinische Details lässt du später vom hauseigenen Dolmetscher-Dienst nochmal bestätigen.",
+            en: "Use a live translation tool for the call – but have sensitive medical details later confirmed by the in-house interpreter service." },
+          { de: "Die komplette Diagnose von der KI ins Türkische übersetzen und ihr per Messenger schicken.",
+            en: "Have AI translate the full diagnosis into Turkish and send it via messenger." }
         ],
         correct: 1,
-        reveal: "Jonas nutzt KI für das **alltägliche Gespräch** – aber bei rechtlich/medizinisch heiklen Inhalten holt er zusätzlich einen echten Dolmetscher dazu. Doppelte Sicherheit.",
-        takeaway: "KI gut für 80% der Fälle. Bei den restlichen 20% (Recht, Medizin, Hochrisiko) lieber Mensch dazu."
+        reveal: {
+          de: "Jonas nutzt KI für das **alltägliche Gespräch** – aber bei rechtlich/medizinisch heiklen Inhalten holt er zusätzlich einen echten Dolmetscher dazu. Doppelte Sicherheit.",
+          en: "Jonas uses AI for the **everyday conversation** – but for legally/medically sensitive content he also brings in a real interpreter. Double safety."
+        },
+        takeaway: {
+          de: "KI gut für 80% der Fälle. Bei den restlichen 20% (Recht, Medizin, Hochrisiko) lieber Mensch dazu.",
+          en: "AI is great for 80% of cases. For the remaining 20% (legal, medical, high-risk) bring a human in too."
+        }
       },
       {
-        scenario: "Schichtwechsel: Du übergibst an die Nachtschicht. 8 Patient:innen, jede:r mit eigener Geschichte.",
-        question: "Wie machst du die Übergabe?",
+        scenario: {
+          de: "Schichtwechsel: Du übergibst an die Nachtschicht. 8 Patient:innen, jede:r mit eigener Geschichte.",
+          en: "Shift change: you hand over to the night shift. 8 patients, each with their own story."
+        },
+        question: { de: "Wie machst du die Übergabe?", en: "How do you do the handover?" },
         options: [
-          "Du druckst alle Akten aus und gehst sie durch – sicher ist sicher.",
-          "KI fasst aus den Akten zusammen – du nutzt die Zeit, um zu ergänzen, was nicht digital steht: Stimmung, Sorgen der Angehörigen, kleine Beobachtungen.",
-          "KI fasst zusammen, du liest die Zusammenfassung vor, fertig."
+          { de: "Du druckst alle Akten aus und gehst sie durch – sicher ist sicher.",
+            en: "Print all records and go through them – better safe than sorry." },
+          { de: "KI fasst aus den Akten zusammen – du nutzt die Zeit, um zu ergänzen, was nicht digital steht: Stimmung, Sorgen der Angehörigen, kleine Beobachtungen.",
+            en: "AI summarizes from the records – you use the time to add what isn't digital: mood, family worries, small observations." },
+          { de: "KI fasst zusammen, du liest die Zusammenfassung vor, fertig.",
+            en: "AI summarizes, you read the summary aloud, done." }
         ],
         correct: 1,
-        reveal: "KI übernimmt das **Faktische** (Vitalwerte, Medikamente, Befunde). Jonas konzentriert sich auf das **Menschliche** – genau das, was in keiner Akte steht und für gute Pflege entscheidend ist.",
-        takeaway: "Lass KI das machen, was sie gut kann. Du machst das, was nur Menschen können."
+        reveal: {
+          de: "KI übernimmt das **Faktische** (Vitalwerte, Medikamente, Befunde). Jonas konzentriert sich auf das **Menschliche** – genau das, was in keiner Akte steht und für gute Pflege entscheidend ist.",
+          en: "AI handles the **facts** (vitals, meds, findings). Jonas focuses on the **human side** – exactly what's not in any record and what makes good care."
+        },
+        takeaway: {
+          de: "Lass KI das machen, was sie gut kann. Du machst das, was nur Menschen können.",
+          en: "Let AI do what it does well. You do what only humans can."
+        }
       }
     ]
   },
@@ -489,46 +628,85 @@ const PERSONAS = [
     initials: "LB",
     name: "Lina Bauer",
     age: 26,
-    role: "Grundschullehrerin im Referendariat",
-    path: "Studium",
-    cluster: "Sozial",
-    quote: "3. Klasse, 24 Kinder, alle auf unterschiedlichem Stand. Plus Eltern, Konferenzen, Korrekturen. KI? Gerne, aber wo fängt man an?",
+    role: { de: "Grundschullehrerin im Referendariat", en: "Primary School Teacher (Trainee)" },
+    path: { de: "Studium", en: "Degree" },
+    cluster: { de: "Sozial", en: "Social" },
+    quote: {
+      de: "3. Klasse, 24 Kinder, alle auf unterschiedlichem Stand. Plus Eltern, Konferenzen, Korrekturen. KI? Gerne, aber wo fängt man an?",
+      en: "Third grade, 24 kids, all at different levels. Plus parents, meetings, marking. AI? Sure – but where do you start?"
+    },
     tasks: [
       {
-        scenario: "Du brauchst für die nächste Stunde Matheaufgaben für die 3. Klasse zum Thema »Multiplikation bis 100«, etwa 30 Minuten Übungszeit für die Kinder.",
-        question: "Wie nutzt du KI sinnvoll?",
+        scenario: {
+          de: "Du brauchst für die nächste Stunde Matheaufgaben für die 3. Klasse zum Thema »Multiplikation bis 100«, etwa 30 Minuten Übungszeit für die Kinder.",
+          en: "For the next lesson you need math exercises for 3rd grade on »multiplication up to 100«, about 30 minutes of practice for the kids."
+        },
+        question: { de: "Wie nutzt du KI sinnvoll?", en: "How do you use AI sensibly?" },
         options: [
-          "Aus dem alten Schulbuch der Kollegin abschreiben – hat ja auch funktioniert.",
-          "Die KI bitten: »Mach mir 10 Matheaufgaben Klasse 3«, nehmen wie sie ist, kopieren, fertig.",
-          "Die KI mit Lehrplan, aktuellem Stand der Klasse und Schwierigkeitsstufen briefen – dann differenzierte Versionen für starke und schwächere Kinder bauen."
+          { de: "Aus dem alten Schulbuch der Kollegin abschreiben – hat ja auch funktioniert.",
+            en: "Copy from a colleague's old textbook – it worked back then too." },
+          { de: "Die KI bitten: »Mach mir 10 Matheaufgaben Klasse 3«, nehmen wie sie ist, kopieren, fertig.",
+            en: "Ask AI: »Give me 10 math exercises for grade 3«, take it as is, copy, done." },
+          { de: "Die KI mit Lehrplan, aktuellem Stand der Klasse und Schwierigkeitsstufen briefen – dann differenzierte Versionen für starke und schwächere Kinder bauen.",
+            en: "Brief AI with the curriculum, the class's current level, and difficulty tiers – then build differentiated versions for stronger and weaker kids." }
         ],
         correct: 2,
-        reveal: "Lina lässt die KI **drei Versionen** machen: leicht, mittel, anspruchsvoll. So bekommt jedes Kind Aufgaben, die zum eigenen Können passen – ohne dass Lina dafür Stunden investieren muss. **Differenzierung in 15 Minuten statt 2 Stunden.**",
-        takeaway: "KI macht Differenzierung machbar. Das ist ein echter Game-Changer für individuelles Lernen."
+        reveal: {
+          de: "Lina lässt die KI **drei Versionen** machen: leicht, mittel, anspruchsvoll. So bekommt jedes Kind Aufgaben, die zum eigenen Können passen – ohne dass Lina dafür Stunden investieren muss. **Differenzierung in 15 Minuten statt 2 Stunden.**",
+          en: "Lina has AI create **three versions**: easy, medium, challenging. So every child gets exercises matching their level – without Lina investing hours. **Differentiation in 15 min instead of 2 hours.**"
+        },
+        takeaway: {
+          de: "KI macht Differenzierung machbar. Das ist ein echter Game-Changer für individuelles Lernen.",
+          en: "AI makes differentiation feasible. A real game-changer for individual learning."
+        }
       },
       {
-        scenario: "Das Sportfest am Freitag fällt wegen Dauerregen aus. Du brauchst kurz vor Feierabend noch einen Elternbrief – freundlich und persönlich, nicht nur Standard.",
-        question: "Was ist die smarte Lösung?",
+        scenario: {
+          de: "Das Sportfest am Freitag fällt wegen Dauerregen aus. Du brauchst kurz vor Feierabend noch einen Elternbrief – freundlich und persönlich, nicht nur Standard.",
+          en: "Friday's sports day is canceled because of heavy rain. Right before the end of the day you need a parent letter – friendly and personal, not just standard."
+        },
+        question: { de: "Was ist die smarte Lösung?", en: "What's the smart solution?" },
         options: [
-          "KI schreibt den Brief komplett, du druckst und verteilst morgen.",
-          "KI macht den Entwurf, du fügst persönlichen Ton hinzu (»wir freuen uns alle auf den Nachholtermin«) und Schul-Spezifika (Lehrer:innen-Name, neuer Termin).",
-          "Du schreibst alles selbst – KI prüft nur die Rechtschreibung."
+          { de: "KI schreibt den Brief komplett, du druckst und verteilst morgen.",
+            en: "AI writes the whole letter, you print and hand it out tomorrow." },
+          { de: "KI macht den Entwurf, du fügst persönlichen Ton hinzu (»wir freuen uns alle auf den Nachholtermin«) und Schul-Spezifika (Lehrer:innen-Name, neuer Termin).",
+            en: "AI drafts it, you add the personal tone (»we're all looking forward to the rescheduled date«) and school specifics (teacher name, new date)." },
+          { de: "Du schreibst alles selbst – KI prüft nur die Rechtschreibung.",
+            en: "You write everything yourself – AI only checks spelling." }
         ],
         correct: 1,
-        reveal: "Der KI-Entwurf gibt Struktur und Tonalität. Lina ergänzt **die 20%, die wirklich nach ihr klingen** – persönliche Anrede, Schul-Insider, ein Augenzwinkern. **In 5 Min statt 30 Min fertig.**",
-        takeaway: "KI macht den 80%-Entwurf. Dein Wert liegt in den 20%, die es zu *deinem* Brief machen."
+        reveal: {
+          de: "Der KI-Entwurf gibt Struktur und Tonalität. Lina ergänzt **die 20%, die wirklich nach ihr klingen** – persönliche Anrede, Schul-Insider, ein Augenzwinkern. **In 5 Min statt 30 Min fertig.**",
+          en: "The AI draft provides structure and tone. Lina adds **the 20% that really sound like her** – personal greeting, school insider notes, a wink. **Done in 5 min instead of 30.**"
+        },
+        takeaway: {
+          de: "KI macht den 80%-Entwurf. Dein Wert liegt in den 20%, die es zu *deinem* Brief machen.",
+          en: "AI does the 80% draft. Your value lies in the 20% that make it *your* letter."
+        }
       },
       {
-        scenario: "Bei einem Kind verschlechtern sich die Noten deutlich. Du willst ein gutes Elterngespräch führen, hast aber wenig Erfahrung mit solchen Situationen.",
-        question: "Was bringt dich am weitesten?",
+        scenario: {
+          de: "Bei einem Kind verschlechtern sich die Noten deutlich. Du willst ein gutes Elterngespräch führen, hast aber wenig Erfahrung mit solchen Situationen.",
+          en: "One child's grades are dropping noticeably. You want to lead a good parent meeting, but you have little experience with such situations."
+        },
+        question: { de: "Was bringt dich am weitesten?", en: "What gets you furthest?" },
         options: [
-          "KI nach allgemeinen Tipps fragen und die abarbeiten.",
-          "Erst KI als Rollenspiel-Partnerin: Du übst das Gespräch zwei-drei Mal, bekommst Feedback zu Tonfall und schwierigen Stellen. Danach gehst du es noch einmal mit einer erfahrenen Kollegin durch, die die Familie und die Schule kennt.",
-          "Komplett alleine vorbereiten – KI hat in so heiklen Themen nichts verloren."
+          { de: "KI nach allgemeinen Tipps fragen und die abarbeiten.",
+            en: "Ask AI for general tips and work through them." },
+          { de: "Erst KI als Rollenspiel-Partnerin: Du übst das Gespräch zwei-drei Mal, bekommst Feedback zu Tonfall und schwierigen Stellen. Danach gehst du es noch einmal mit einer erfahrenen Kollegin durch, die die Familie und die Schule kennt.",
+            en: "First AI as a role-play partner: practice the conversation two or three times, get feedback on tone and tricky moments. Then go through it again with an experienced colleague who knows the family and the school." },
+          { de: "Komplett alleine vorbereiten – KI hat in so heiklen Themen nichts verloren.",
+            en: "Prepare entirely alone – AI has no business in such sensitive topics." }
         ],
         correct: 1,
-        reveal: "Lina nutzt die KI als **ersten Sparringpartner**: spielt die Eltern, gibt Feedback zu Tonfall, schlägt Reformulierungen vor (»sag nicht ›Ihr Kind ist faul‹, sondern ›wir beobachten gerade…‹«). Den entscheidenden Schliff bekommt sie aber im Gespräch mit einer **erfahrenen Kollegin** – die kennt die Familie, die Untertöne, die kleinen Hinweise, die in keiner KI stecken. **Beides zusammen** macht sie für das Gespräch wirklich stark.",
-        takeaway: "KI ist eine gute erste Übungspartnerin. Für das, was menschliche Erfahrung wirklich ausmacht, brauchst du echte Menschen."
+        reveal: {
+          de: "Lina nutzt die KI als **ersten Sparringpartner**: spielt die Eltern, gibt Feedback zu Tonfall, schlägt Reformulierungen vor (»sag nicht ›Ihr Kind ist faul‹, sondern ›wir beobachten gerade…‹«). Den entscheidenden Schliff bekommt sie aber im Gespräch mit einer **erfahrenen Kollegin** – die kennt die Familie, die Untertöne, die kleinen Hinweise, die in keiner KI stecken. **Beides zusammen** macht sie für das Gespräch wirklich stark.",
+          en: "Lina uses AI as a **first sparring partner**: it plays the parents, gives feedback on tone, suggests rewordings (»don't say ›your child is lazy‹, say ›we're currently observing…‹«). The decisive polish comes in the conversation with an **experienced colleague** – she knows the family, the undertones, the subtle hints no AI has. **The combination** makes her truly ready for the meeting."
+        },
+        takeaway: {
+          de: "KI ist eine gute erste Übungspartnerin. Für das, was menschliche Erfahrung wirklich ausmacht, brauchst du echte Menschen.",
+          en: "AI is a good first practice partner. For what real human experience brings, you need real people."
+        }
       }
     ]
   },
@@ -537,46 +715,85 @@ const PERSONAS = [
     initials: "TS",
     name: "Tobi Schneider",
     age: 22,
-    role: "Mechatroniker im Maschinenbau",
-    path: "Ausbildung",
-    cluster: "Technisch",
-    quote: "Halle 3, Schicht ab 7 Uhr. Maschinen warten nicht. Mein Werkzeugkasten ist gut sortiert – seit Neuestem auch mit KI drin.",
+    role: { de: "Mechatroniker im Maschinenbau", en: "Mechatronics Technician, Mechanical Engineering" },
+    path: { de: "Ausbildung", en: "Apprenticeship" },
+    cluster: { de: "Technisch", en: "Technical" },
+    quote: {
+      de: "Halle 3, Schicht ab 7 Uhr. Maschinen warten nicht. Mein Werkzeugkasten ist gut sortiert – seit Neuestem auch mit KI drin.",
+      en: "Hall 3, shift from 7 am. Machines don't wait. My toolbox is well organized – now with AI in it too."
+    },
     tasks: [
       {
-        scenario: "Eine Produktionsanlage steht still. Auf dem Display: Fehlercode E-422. Im 800-Seiten-Handbuch zu suchen würde 20 Min dauern.",
-        question: "Wie reagierst du?",
+        scenario: {
+          de: "Eine Produktionsanlage steht still. Auf dem Display: Fehlercode E-422. Im 800-Seiten-Handbuch zu suchen würde 20 Min dauern.",
+          en: "A production line is down. On the display: error code E-422. Searching the 800-page manual would take 20 minutes."
+        },
+        question: { de: "Wie reagierst du?", en: "How do you react?" },
         options: [
-          "Handbuch raussuchen und Seite für Seite durchblättern.",
-          "Foto vom Display + Symptomen beschreiben + Anlagentyp angeben → KI macht Diagnose-Vorschläge, du prüfst und behebst.",
-          "Anlage neu starten und hoffen, dass es weg ist."
+          { de: "Handbuch raussuchen und Seite für Seite durchblättern.",
+            en: "Pull out the manual and flip through page by page." },
+          { de: "Foto vom Display + Symptomen beschreiben + Anlagentyp angeben → KI macht Diagnose-Vorschläge, du prüfst und behebst.",
+            en: "Photo of the display + describe symptoms + state the machine type → AI offers diagnostic suggestions, you check and fix." },
+          { de: "Anlage neu starten und hoffen, dass es weg ist.",
+            en: "Restart the machine and hope it's gone." }
         ],
         correct: 1,
-        reveal: "Tobi macht ein Foto, schreibt »E-422, ungewöhnliches Klacken, läuft seit 3 Tagen warm« – KI liefert 3 wahrscheinliche Ursachen + Prüfschritte. **In 3 Min statt 20.** Den Fix führt er selbst aus, dokumentiert direkt.",
-        takeaway: "KI ist dein erster Diagnose-Helfer. Der Profi-Check und die Hände am Werkzeug bleiben bei dir."
+        reveal: {
+          de: "Tobi macht ein Foto, schreibt »E-422, ungewöhnliches Klacken, läuft seit 3 Tagen warm« – KI liefert 3 wahrscheinliche Ursachen + Prüfschritte. **In 3 Min statt 20.** Den Fix führt er selbst aus, dokumentiert direkt.",
+          en: "Tobi takes a photo, writes »E-422, unusual clicking, running warm for 3 days« – AI delivers 3 likely causes + checks. **3 min instead of 20.** He does the fix himself and documents it right away."
+        },
+        takeaway: {
+          de: "KI ist dein erster Diagnose-Helfer. Der Profi-Check und die Hände am Werkzeug bleiben bei dir.",
+          en: "AI is your first diagnostic helper. The pro check and the hands on the tool stay with you."
+        }
       },
       {
-        scenario: "Schichtende. Du hast eine knifflige Reparatur gemacht und sollst der Spätschicht erklären, was passiert ist und worauf sie achten müssen.",
-        question: "Wie übergibst du?",
+        scenario: {
+          de: "Schichtende. Du hast eine knifflige Reparatur gemacht und sollst der Spätschicht erklären, was passiert ist und worauf sie achten müssen.",
+          en: "End of shift. You did a tricky repair and need to explain to the late shift what happened and what to watch out for."
+        },
+        question: { de: "Wie übergibst du?", en: "How do you hand over?" },
         options: [
-          "Drei Stichpunkte handschriftlich auf einen Zettel, dranlegen.",
-          "Während der Arbeit Voice-Memos aufgenommen → KI strukturiert sie zu einer sauberen Übergabe-Doku mit Beobachtungen, Aktionen und Warnhinweisen → du prüfst und postest sie ins Team.",
-          "Ach, machen die Kollegen schon. Wozu Doku?"
+          { de: "Drei Stichpunkte handschriftlich auf einen Zettel, dranlegen.",
+            en: "Three handwritten bullet points on a sheet of paper, leave it for them." },
+          { de: "Während der Arbeit Voice-Memos aufgenommen → KI strukturiert sie zu einer sauberen Übergabe-Doku mit Beobachtungen, Aktionen und Warnhinweisen → du prüfst und postest sie ins Team.",
+            en: "Recorded voice memos during the work → AI structures them into a clean handover doc with observations, actions, and warnings → you check and post it to the team." },
+          { de: "Ach, machen die Kollegen schon. Wozu Doku?",
+            en: "Eh, the colleagues will figure it out. Why bother with docs?" }
         ],
         correct: 1,
-        reveal: "Tobi spricht zwischendurch in sein Handy: »Schraube 4 war locker, Lagertemperatur 78 Grad, Wartungsintervall verkürzen.« KI macht daraus eine **strukturierte Übergabe in 2 Min** – die Spätschicht weiß sofort Bescheid.",
-        takeaway: "Sprechen ist schneller als tippen. KI macht aus deinen Worten saubere Dokumentation."
+        reveal: {
+          de: "Tobi spricht zwischendurch in sein Handy: »Schraube 4 war locker, Lagertemperatur 78 Grad, Wartungsintervall verkürzen.« KI macht daraus eine **strukturierte Übergabe in 2 Min** – die Spätschicht weiß sofort Bescheid.",
+          en: "Tobi speaks into his phone in between: »Screw 4 was loose, bearing temperature 78°C, shorten maintenance interval.« AI turns it into a **structured handover in 2 min** – the late shift knows immediately."
+        },
+        takeaway: {
+          de: "Sprechen ist schneller als tippen. KI macht aus deinen Worten saubere Dokumentation.",
+          en: "Speaking is faster than typing. AI turns your words into clean documentation."
+        }
       },
       {
-        scenario: "Ein Kunde fragt an: »Können Sie uns eine Sonderkonstruktion mit doppelter Belastbarkeit bauen?« Du brauchst eine erste technische Einschätzung.",
-        question: "Was ist der richtige Weg?",
+        scenario: {
+          de: "Ein Kunde fragt an: »Können Sie uns eine Sonderkonstruktion mit doppelter Belastbarkeit bauen?« Du brauchst eine erste technische Einschätzung.",
+          en: "A customer asks: »Can you build us a custom construction with double load capacity?« You need a first technical assessment."
+        },
+        question: { de: "Was ist der richtige Weg?", en: "What's the right way?" },
         options: [
-          "Per Hand rechnen, 2 Stunden investieren, dann dem Kunden antworten.",
-          "KI hilft bei Berechnung und Materialvorschlag, du gehst mit dem Entwurf zur Meisterin oder Ingenieur:in zur fachlichen Freigabe – und antwortest dem Kunden.",
-          "KI antwortet dem Kunden direkt – ihre Berechnungen sind eh genauer als deine."
+          { de: "Per Hand rechnen, 2 Stunden investieren, dann dem Kunden antworten.",
+            en: "Calculate by hand, invest 2 hours, then reply to the customer." },
+          { de: "KI hilft bei Berechnung und Materialvorschlag, du gehst mit dem Entwurf zur Meisterin oder Ingenieur:in zur fachlichen Freigabe – und antwortest dem Kunden.",
+            en: "AI helps with calculation and material suggestion, you take the draft to your master craftsperson or engineer for technical sign-off – and reply to the customer." },
+          { de: "KI antwortet dem Kunden direkt – ihre Berechnungen sind eh genauer als deine.",
+            en: "AI replies to the customer directly – its calculations are more accurate than yours anyway." }
         ],
         correct: 1,
-        reveal: "Tobi nutzt KI für eine **schnelle erste Einschätzung** von Berechnung und Materialvorschlag. Die technische Verantwortung gegenüber dem Kunden bleibt aber beim Meister oder bei der Ingenieurin – das ist Profi-Sache. So entstehen **schnelle Antworten ohne Haftungs-Risiko**.",
-        takeaway: "KI rechnet schnell und liefert eine Basis. Verantwortung kann sie nicht übernehmen – das macht eine Fachperson."
+        reveal: {
+          de: "Tobi nutzt KI für eine **schnelle erste Einschätzung** von Berechnung und Materialvorschlag. Die technische Verantwortung gegenüber dem Kunden bleibt aber beim Meister oder bei der Ingenieurin – das ist Profi-Sache. So entstehen **schnelle Antworten ohne Haftungs-Risiko**.",
+          en: "Tobi uses AI for a **quick first assessment** of calculation and material. Technical responsibility toward the customer stays with the master or engineer – that's pro territory. The result: **fast answers without liability risk**."
+        },
+        takeaway: {
+          de: "KI rechnet schnell und liefert eine Basis. Verantwortung kann sie nicht übernehmen – das macht eine Fachperson.",
+          en: "AI calculates fast and provides a basis. It can't take responsibility – that's a human expert's job."
+        }
       }
     ]
   },
@@ -585,46 +802,85 @@ const PERSONAS = [
     initials: "LA",
     name: "Leyla Aydın",
     age: 23,
-    role: "Fachinformatikerin Systemintegration",
-    path: "Ausbildung",
-    cluster: "IT",
-    quote: "Mittelständler mit 400 Leuten, ich bin das IT-Team – zusammen mit meinem Chef. Heißt: alles vom Drucker bis zum Server. Und seit KI: erstaunlich entspannt.",
+    role: { de: "Fachinformatikerin Systemintegration", en: "IT Specialist, Systems Integration" },
+    path: { de: "Ausbildung", en: "Apprenticeship" },
+    cluster: { de: "IT", en: "IT" },
+    quote: {
+      de: "Mittelständler mit 400 Leuten, ich bin das IT-Team – zusammen mit meinem Chef. Heißt: alles vom Drucker bis zum Server. Und seit KI: erstaunlich entspannt.",
+      en: "Mid-size company, 400 people, I'm the IT team – together with my boss. Means: everything from printers to servers. And since AI: surprisingly relaxed."
+    },
     tasks: [
       {
-        scenario: "Montag 8:00 Uhr. Du öffnest das Ticket-System: 17 neue Anfragen über das Wochenende. Drucker, Login-Probleme, »ein Programm stürzt ab«, ein Server-Alert.",
-        question: "Wie strukturierst du deinen Tag?",
+        scenario: {
+          de: "Montag 8:00 Uhr. Du öffnest das Ticket-System: 17 neue Anfragen über das Wochenende. Drucker, Login-Probleme, »ein Programm stürzt ab«, ein Server-Alert.",
+          en: "Monday 8:00 am. You open the ticket system: 17 new requests over the weekend. Printers, login issues, »a program is crashing«, a server alert."
+        },
+        question: { de: "Wie strukturierst du deinen Tag?", en: "How do you structure your day?" },
         options: [
-          "Reihenfolge des Eingangs abarbeiten – fair für alle.",
-          "KI lässt du Tickets nach Dringlichkeit priorisieren und ähnliche bündeln (»3x dasselbe VPN-Problem«) – du arbeitest fokussiert nach Cluster.",
-          "Auto-Responder an alle: »Wird bearbeitet« – dann erstmal Kaffee."
+          { de: "Reihenfolge des Eingangs abarbeiten – fair für alle.",
+            en: "Work through them in order of arrival – fair for everyone." },
+          { de: "KI lässt du Tickets nach Dringlichkeit priorisieren und ähnliche bündeln (»3x dasselbe VPN-Problem«) – du arbeitest fokussiert nach Cluster.",
+            en: "Let AI prioritize tickets by urgency and group similar ones (»3x the same VPN problem«) – you work focused by cluster." },
+          { de: "Auto-Responder an alle: »Wird bearbeitet« – dann erstmal Kaffee.",
+            en: "Auto-responder to all: »Being processed« – then coffee first." }
         ],
         correct: 1,
-        reveal: "KI markiert den Server-Alert als kritisch, bündelt die 3 VPN-Tickets (gleicher Fix), erkennt 2 Phishing-Mails als »Schulung statt Lösung nötig«. Leyla arbeitet **17 Tickets in 90 Min statt in 3 Stunden** ab.",
-        takeaway: "KI gibt dir Überblick. Priorisierung ist die wichtigste Skill im IT-Support – KI macht sie einfacher."
+        reveal: {
+          de: "KI markiert den Server-Alert als kritisch, bündelt die 3 VPN-Tickets (gleicher Fix), erkennt 2 Phishing-Mails als »Schulung statt Lösung nötig«. Leyla arbeitet **17 Tickets in 90 Min statt in 3 Stunden** ab.",
+          en: "AI flags the server alert as critical, groups the 3 VPN tickets (same fix), recognizes 2 phishing emails as »training needed, not a fix«. Leyla handles **17 tickets in 90 min instead of 3 hours**."
+        },
+        takeaway: {
+          de: "KI gibt dir Überblick. Priorisierung ist die wichtigste Skill im IT-Support – KI macht sie einfacher.",
+          en: "AI gives you the overview. Prioritizing is the most important skill in IT support – AI makes it easier."
+        }
       },
       {
-        scenario: "Die Buchhaltung beschwert sich: »Das Tabellenkalkulationsprogramm stürzt ab beim Öffnen einer bestimmten Datei.« Die Fehlermeldung ist kryptisch und du hast das noch nie gesehen.",
-        question: "Wie gehst du vor?",
+        scenario: {
+          de: "Die Buchhaltung beschwert sich: »Das Tabellenkalkulationsprogramm stürzt ab beim Öffnen einer bestimmten Datei.« Die Fehlermeldung ist kryptisch und du hast das noch nie gesehen.",
+          en: "Accounting complains: »The spreadsheet program crashes when opening a specific file.« The error message is cryptic and you've never seen it before."
+        },
+        question: { de: "Wie gehst du vor?", en: "How do you proceed?" },
         options: [
-          "Das Programm neu installieren und hoffen, dass es weg ist.",
-          "Der KI Fehlermeldung, Programm-Version, Größe der Datei und Kontext geben → Hypothesen und Test-Schritte bekommen → systematisch durchgehen.",
-          "Bei der Familie nachfragen, wer sich auskennt."
+          { de: "Das Programm neu installieren und hoffen, dass es weg ist.",
+            en: "Reinstall the program and hope it goes away." },
+          { de: "Der KI Fehlermeldung, Programm-Version, Größe der Datei und Kontext geben → Hypothesen und Test-Schritte bekommen → systematisch durchgehen.",
+            en: "Give AI the error message, program version, file size, and context → get hypotheses and test steps → work through them systematically." },
+          { de: "Bei der Familie nachfragen, wer sich auskennt.",
+            en: "Ask the family who knows about this." }
         ],
         correct: 1,
-        reveal: "KI vermutet **fehlerhafte verlinkte Datenquelle** – Leyla prüft, findet einen toten Pfad zu einer alten Netzwerk-Freigabe. **5 Min Diagnose statt 45 Min Trial & Error.** Sie dokumentiert sofort für die Wissensdatenbank.",
-        takeaway: "KI ist ein guter Hypothesen-Generator. Den Test musst du machen – aber du weißt sofort, wo du suchen sollst."
+        reveal: {
+          de: "KI vermutet **fehlerhafte verlinkte Datenquelle** – Leyla prüft, findet einen toten Pfad zu einer alten Netzwerk-Freigabe. **5 Min Diagnose statt 45 Min Trial & Error.** Sie dokumentiert sofort für die Wissensdatenbank.",
+          en: "AI suspects a **broken linked data source** – Leyla checks, finds a dead path to an old network share. **5 min of diagnosis instead of 45 min of trial & error.** She documents it immediately for the knowledge base."
+        },
+        takeaway: {
+          de: "KI ist ein guter Hypothesen-Generator. Den Test musst du machen – aber du weißt sofort, wo du suchen sollst.",
+          en: "AI is a great hypothesis generator. You run the test – but you know right away where to look."
+        }
       },
       {
-        scenario: "Du hast einen cleveren Workaround für ein wiederkehrendes Problem gebaut. Kolleg:innen sollen das künftig selbst nutzen können – ohne dich jedes Mal zu fragen.",
-        question: "Wie erstellst du gute Doku?",
+        scenario: {
+          de: "Du hast einen cleveren Workaround für ein wiederkehrendes Problem gebaut. Kolleg:innen sollen das künftig selbst nutzen können – ohne dich jedes Mal zu fragen.",
+          en: "You built a clever workaround for a recurring problem. Colleagues should be able to use it themselves – without asking you every time."
+        },
+        question: { de: "Wie erstellst du gute Doku?", en: "How do you create good documentation?" },
         options: [
-          "Mündlich an die Kolleg:innen weitergeben, die das brauchen.",
-          "KI eine fertige Doku schreiben lassen und direkt veröffentlichen – KI ist ja im Schreiben gut.",
-          "Du schreibst Rohtext + machst Screenshots → KI strukturiert in Schritte, ergänzt Vorbedingungen → du fügst Edge Cases und »Was wenn schief geht« hinzu."
+          { de: "Mündlich an die Kolleg:innen weitergeben, die das brauchen.",
+            en: "Pass it on verbally to the colleagues who need it." },
+          { de: "KI eine fertige Doku schreiben lassen und direkt veröffentlichen – KI ist ja im Schreiben gut.",
+            en: "Have AI write a finished doc and publish it directly – AI is good at writing." },
+          { de: "Du schreibst Rohtext + machst Screenshots → KI strukturiert in Schritte, ergänzt Vorbedingungen → du fügst Edge Cases und »Was wenn schief geht« hinzu.",
+            en: "You write raw text + take screenshots → AI structures it into steps, adds prerequisites → you add edge cases and »what if it goes wrong«." }
         ],
         correct: 2,
-        reveal: "KI strukturiert aus Leylas Rohtext eine **saubere Schritt-für-Schritt-Anleitung mit Screenshots**. Leyla ergänzt die Dinge, die KI nicht wissen kann: typische Fehler, was wenn schief geht, interne Besonderheiten. **Doku, die Kolleg:innen wirklich nutzen.**",
-        takeaway: "KI strukturiert und formatiert. Das Erfahrungswissen kommt von dir – das macht den Unterschied zwischen mittelmäßiger und richtig guter Doku."
+        reveal: {
+          de: "KI strukturiert aus Leylas Rohtext eine **saubere Schritt-für-Schritt-Anleitung mit Screenshots**. Leyla ergänzt die Dinge, die KI nicht wissen kann: typische Fehler, was wenn schief geht, interne Besonderheiten. **Doku, die Kolleg:innen wirklich nutzen.**",
+          en: "AI structures Leyla's raw text into a **clean step-by-step guide with screenshots**. Leyla adds what AI can't know: typical errors, what if things go wrong, internal specifics. **Documentation that colleagues actually use.**"
+        },
+        takeaway: {
+          de: "KI strukturiert und formatiert. Das Erfahrungswissen kommt von dir – das macht den Unterschied zwischen mittelmäßiger und richtig guter Doku.",
+          en: "AI structures and formats. The experiential knowledge comes from you – that's what separates mediocre from really good docs."
+        }
       }
     ]
   }
@@ -679,15 +935,16 @@ function el(tag, attrs = {}, ...children) {
 
 /* ---- Home ---- */
 function renderHome(root) {
+  const s = t();
   root.appendChild(el("div", { class: "hero" },
-    el("h1", {}, "Wie verändert KI die Berufswelt?"),
-    el("p", { class: "sub" }, "Such dir einen Beruf aus und löse drei Mini-Aufgaben aus dem Arbeitsalltag. Du entscheidest, wie KI klug eingesetzt wird – und siehst dann, wie es die echten Profis machen."),
-    el("p", {}, el("strong", {}, "So funktioniert's:")),
+    el("h1", {}, s.heroH1),
+    el("p", { class: "sub" }, s.heroSub),
+    el("p", {}, el("strong", {}, s.howItWorks)),
     el("ol", {},
-      el("li", {}, "Beruf wählen"),
-      el("li", {}, "Aufgabe lesen – im Team überlegen"),
-      el("li", {}, "Eure beste Antwort tippen"),
-      el("li", {}, "Lösung & Aha-Moment aufdecken"))
+      el("li", {}, s.steps[0]),
+      el("li", {}, s.steps[1]),
+      el("li", {}, s.steps[2]),
+      el("li", {}, s.steps[3]))
   ));
 
   root.appendChild(el("div", { class: "grid", id: "personaGrid" },
@@ -700,12 +957,12 @@ function renderHome(root) {
           el("div", { class: "avatar" }, p.initials),
           el("div", {},
             el("h3", {}, `${p.name}, ${p.age}`),
-            el("div", { class: "role" }, p.role)
+            el("div", { class: "role" }, tr(p.role))
           )
         ),
         el("div", { class: "meta" },
-          el("span", { class: "chip accent" }, p.cluster),
-          el("span", { class: "chip" }, p.path)
+          el("span", { class: "chip accent" }, tr(p.cluster)),
+          el("span", { class: "chip" }, tr(p.path))
         )
       );
       return card;
@@ -716,29 +973,30 @@ function renderHome(root) {
 /* ---- Persona Detail ---- */
 function renderPersona(root) {
   const p = PERSONAS.find(x => x.id === state.personaId);
+  const s = t();
 
   root.appendChild(el("button", { class: "back", onclick: () => { state.view = "home"; render(); } },
-    "← Andere:n Beruf wählen"));
+    s.backToHome));
 
   root.appendChild(el("div", { class: "card" },
     el("div", { class: "persona-header" },
       el("div", { class: "avatar" }, p.initials),
       el("div", {},
         el("h2", {}, `${p.name}, ${p.age}`),
-        el("div", { class: "role" }, `${p.role} · ${p.path}`)
+        el("div", { class: "role" }, `${tr(p.role)} · ${tr(p.path)}`)
       )
     ),
-    el("p", { class: "persona-quote" }, `„${p.quote}"`),
+    el("p", { class: "persona-quote" }, `${s.quoteOpen}${tr(p.quote)}${s.quoteClose}`),
 
     el("div", { class: "tasks" },
-      ...p.tasks.map((t, i) => {
+      ...p.tasks.map((task, i) => {
         const done = isDone(p.id, i);
         return el("button", {
           class: "task-item" + (done ? " done" : ""),
           onclick: () => { state.taskIdx = i; state.view = "task"; render(); }
         },
           el("div", { class: "task-num" }, done ? "✓" : String(i + 1)),
-          el("div", { class: "task-title" }, `Aufgabe ${i + 1}`),
+          el("div", { class: "task-title" }, s.taskLabel(i + 1)),
           el("div", { class: "arrow" }, "›")
         );
       })
@@ -746,8 +1004,8 @@ function renderPersona(root) {
 
     countDone(p.id) === p.tasks.length
       ? el("div", { class: "reveal", style: "margin-top:18px" },
-          el("h4", {}, "Alle Aufgaben gelöst!"),
-          el("p", {}, `Du hast ${p.name}s Arbeitstag mitgestaltet. Probier einen anderen Beruf oder geh zurück zur Übersicht.`)
+          el("h4", {}, s.allDone),
+          el("p", {}, s.allDoneText(p.name))
         )
       : null
   ));
@@ -756,36 +1014,36 @@ function renderPersona(root) {
 /* ---- Task ---- */
 function renderTask(root) {
   const p = PERSONAS.find(x => x.id === state.personaId);
-  const t = p.tasks[state.taskIdx];
+  const task = p.tasks[state.taskIdx];
+  const s = t();
   let answered = false;
-  let chosen = null;
 
   root.appendChild(el("button", { class: "back", onclick: () => { state.view = "persona"; render(); } },
-    `← ${p.name}s Tag`));
+    s.backToDay(p.name.split(" ")[0])));
 
   const persoBar = el("div", { style: "display:flex;align-items:center;gap:10px;margin-bottom:14px;" },
     el("div", { class: "avatar", style: "width:32px;height:32px;font-size:13px;border-radius:999px;background:var(--cp-accent-soft);color:var(--cp-accent);display:flex;align-items:center;justify-content:center;font-weight:700" }, p.initials),
     el("div", { style: "font-size:14px;color:var(--cp-text-muted)" },
       el("strong", { style: "color:var(--cp-text)" }, p.name),
-      ` · Aufgabe ${state.taskIdx + 1} von ${p.tasks.length}`)
+      ` · ${s.taskCount(state.taskIdx + 1, p.tasks.length)}`)
   );
   root.appendChild(persoBar);
 
   const card = el("div", { class: "card" },
-    el("div", { class: "scenario" }, t.scenario),
-    el("p", { class: "question" }, t.question)
+    el("div", { class: "scenario" }, tr(task.scenario)),
+    el("p", { class: "question" }, tr(task.question))
   );
 
   const letters = ["A", "B", "C"];
   const optsWrap = el("div", { class: "options" });
   const optionEls = [];
-  t.options.forEach((opt, i) => {
+  task.options.forEach((opt, i) => {
     const oEl = el("button", {
       class: "option",
       onclick: () => choose(i)
     },
       el("div", { class: "letter" }, letters[i]),
-      el("div", {}, opt)
+      el("div", {}, tr(opt))
     );
     optionEls.push(oEl);
     optsWrap.appendChild(oEl);
@@ -803,18 +1061,18 @@ function renderTask(root) {
   function choose(i) {
     if (answered) return;
     answered = true;
-    chosen = i;
     optionEls.forEach((oel, idx) => {
       oel.disabled = true;
-      if (idx === t.correct) oel.classList.add("correct");
+      if (idx === task.correct) oel.classList.add("correct");
       else if (idx === i) oel.classList.add("wrong");
     });
 
-    const isRight = i === t.correct;
+    const isRight = i === task.correct;
+    const firstname = p.name.split(" ")[0];
     const reveal = el("div", { class: "reveal" },
-      el("h4", {}, isRight ? "Richtig! So macht es " + p.name.split(" ")[0] : "Nicht ganz – so macht es " + p.name.split(" ")[0]),
-      el("p", { html: t.reveal }),
-      el("div", { class: "takeaway" }, "💡 " + t.takeaway)
+      el("h4", {}, isRight ? s.correct(firstname) : s.wrong(firstname)),
+      el("p", { html: tr(task.reveal) }),
+      el("div", { class: "takeaway" }, "💡 " + tr(task.takeaway))
     );
     revealMount.appendChild(reveal);
 
@@ -826,27 +1084,45 @@ function renderTask(root) {
       actions.appendChild(el("button", {
         class: "btn primary",
         onclick: () => { state.taskIdx++; render(); }
-      }, "Nächste Aufgabe →"));
+      }, s.nextTask));
     } else {
       actions.appendChild(el("button", {
         class: "btn primary",
         onclick: () => { state.view = "home"; render(); }
-      }, "🎉 Anderen Beruf wählen"));
+      }, s.pickAnother));
     }
     actions.appendChild(el("button", {
       class: "btn",
       onclick: () => { state.view = "persona"; render(); }
-    }, "Zurück zu " + p.name.split(" ")[0]));
+    }, s.backToPerson(p.name.split(" ")[0])));
     actionsMount.appendChild(actions);
   }
 }
 
-/* ---- Theme toggle ---- */
+/* ---- UI chrome (brand label + button labels) ---- */
+function applyChrome() {
+  const s = t();
+  document.getElementById("brandLabel").textContent = s.brand;
+  document.getElementById("langBtnLabel").textContent = s.langBtnLabel;
+  document.getElementById("themeBtnLabel").textContent = s.themeLabel;
+  document.documentElement.setAttribute("lang", LANG);
+  document.title = s.brand;
+}
+
+/* ---- Theme + Language toggles ---- */
 document.getElementById("themeBtn").addEventListener("click", () => {
   const cur = document.documentElement.getAttribute("data-theme");
   document.documentElement.setAttribute("data-theme", cur === "dark" ? "light" : "dark");
 });
 
+document.getElementById("langBtn").addEventListener("click", () => {
+  LANG = LANG === "de" ? "en" : "de";
+  try { localStorage.setItem("aiwl-lang", LANG); } catch (_) {}
+  applyChrome();
+  render();
+});
+
+applyChrome();
 render();
 </script>
 </body>
