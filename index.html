@@ -163,7 +163,8 @@
     background: var(--cp-accent-soft);
     color: var(--cp-accent);
     display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 18px;
+    font-weight: 700; font-size: 26px;
+    line-height: 1;
   }
   .persona-card .row { display: flex; align-items: center; gap: 12px; }
   .persona-card h3 { margin: 0; font-size: 17px; }
@@ -198,7 +199,7 @@
   }
   .back:hover { color: var(--cp-accent); }
   .persona-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
-  .persona-header .avatar { width: 56px; height: 56px; font-size: 22px; }
+  .persona-header .avatar { width: 56px; height: 56px; font-size: 30px; }
   .persona-header h2 { margin: 0; font-size: 22px; }
   .persona-header .role { color: var(--cp-text-muted); font-size: 14px; }
   .persona-quote {
@@ -363,6 +364,14 @@
   .completion h2 { margin: 0 0 8px; }
   .completion p { color: var(--cp-text-muted); margin: 0 0 20px; }
   .hidden { display: none !important; }
+  .site-footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--cp-border);
+    text-align: center;
+    color: var(--cp-text-soft);
+    font-size: 13px;
+  }
   .pill {
     display: inline-block;
     background: var(--cp-accent);
@@ -390,6 +399,10 @@
   </header>
 
   <main id="view"></main>
+
+  <footer class="site-footer">
+    <span id="footerLabel">Made with AI &amp; ❤ in Berlin</span>
+  </footer>
 </div>
 
 <script>
@@ -416,7 +429,8 @@ const T = {
     wrong: (n) => `Nicht ganz – so macht es ${n}`,
     nextTask: "Nächste Aufgabe →",
     pickAnother: "🎉 Anderen Beruf wählen",
-    quoteOpen: "„", quoteClose: "“"
+    quoteOpen: "„", quoteClose: "“",
+    footer: "Made with AI &amp; ❤"
   },
   en: {
     brand: "AI Worklab · AI in everyday work",
@@ -437,7 +451,8 @@ const T = {
     wrong: (n) => `Not quite – here's how ${n} does it`,
     nextTask: "Next task →",
     pickAnother: "🎉 Pick another profession",
-    quoteOpen: "“", quoteClose: "”"
+    quoteOpen: "“", quoteClose: "”",
+    footer: "Made with AI &amp; ❤"
   }
 };
 
@@ -452,6 +467,7 @@ const PERSONAS = [
   {
     id: "mia",
     initials: "MK",
+    emoji: "👩‍🎨",
     name: "Mia Krüger",
     age: 24,
     role: { de: "Kommunikationsdesignerin (B.A.)", en: "Communication Designer (B.A.)" },
@@ -542,6 +558,7 @@ const PERSONAS = [
   {
     id: "jonas",
     initials: "JM",
+    emoji: "👨‍⚕️",
     name: "Jonas Meier",
     age: 29,
     role: { de: "Pflegefachkraft, Klinikum", en: "Registered Nurse, Hospital" },
@@ -632,6 +649,7 @@ const PERSONAS = [
   {
     id: "lina",
     initials: "LB",
+    emoji: "👩‍🏫",
     name: "Lina Bauer",
     age: 26,
     role: { de: "Grundschullehrerin im Referendariat", en: "Primary School Teacher (Trainee)" },
@@ -722,6 +740,7 @@ const PERSONAS = [
   {
     id: "tobi",
     initials: "TS",
+    emoji: "👨‍🔧",
     name: "Tobi Schneider",
     age: 22,
     role: { de: "Mechatroniker im Maschinenbau", en: "Mechatronics Technician, Mechanical Engineering" },
@@ -812,6 +831,7 @@ const PERSONAS = [
   {
     id: "leyla",
     initials: "LA",
+    emoji: "👩‍💻",
     name: "Leyla Aydın",
     age: 23,
     role: { de: "Fachinformatikerin Systemintegration", en: "IT Specialist, Systems Integration" },
@@ -969,7 +989,7 @@ function renderHome(root) {
         onclick: () => { state.personaId = p.id; state.view = "persona"; render(); }
       },
         el("div", { class: "row" },
-          el("div", { class: "avatar" }, p.initials),
+          el("div", { class: "avatar" }, p.emoji || p.initials),
           el("div", {},
             el("h3", {}, `${p.name}, ${p.age}`),
             el("div", { class: "role" }, tr(p.role))
@@ -995,7 +1015,7 @@ function renderPersona(root) {
 
   root.appendChild(el("div", { class: "card" },
     el("div", { class: "persona-header" },
-      el("div", { class: "avatar" }, p.initials),
+      el("div", { class: "avatar" }, p.emoji || p.initials),
       el("div", {},
         el("h2", {}, `${p.name}, ${p.age}`),
         el("div", { class: "role" }, `${tr(p.role)} · ${tr(p.path)}`)
@@ -1037,7 +1057,7 @@ function renderTask(root) {
     s.backToDay(p.name.split(" ")[0])));
 
   const persoBar = el("div", { style: "display:flex;align-items:center;gap:10px;margin-bottom:14px;" },
-    el("div", { class: "avatar", style: "width:32px;height:32px;font-size:13px;border-radius:999px;background:var(--cp-accent-soft);color:var(--cp-accent);display:flex;align-items:center;justify-content:center;font-weight:700" }, p.initials),
+    el("div", { class: "avatar", style: "width:32px;height:32px;font-size:18px;border-radius:999px;background:var(--cp-accent-soft);color:var(--cp-accent);display:flex;align-items:center;justify-content:center;font-weight:700;line-height:1" }, p.emoji || p.initials),
     el("div", { style: "font-size:14px;color:var(--cp-text-muted)" },
       el("strong", { style: "color:var(--cp-text)" }, p.name),
       ` · ${s.taskCount(state.taskIdx + 1, p.tasks.length)}`)
@@ -1120,6 +1140,7 @@ function applyChrome() {
   document.getElementById("brandLabel").textContent = s.brand;
   document.getElementById("langBtnLabel").textContent = s.langBtnLabel;
   document.getElementById("themeBtnLabel").textContent = s.themeLabel;
+  document.getElementById("footerLabel").innerHTML = s.footer;
   document.documentElement.setAttribute("lang", LANG);
   document.title = s.brand;
 }
