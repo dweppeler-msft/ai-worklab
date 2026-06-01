@@ -172,16 +172,6 @@
   .persona-card .meta {
     display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;
   }
-  .persona-card .today {
-    font-size: 13px;
-    color: var(--cp-text-muted);
-    line-height: 1.4;
-    margin-top: 2px;
-  }
-  .persona-card .today-label {
-    color: var(--cp-accent);
-    font-weight: 600;
-  }
   .chip {
     background: var(--cp-surface-soft);
     border: 1px solid var(--cp-border);
@@ -440,8 +430,7 @@ const T = {
     nextTask: "Nächste Aufgabe →",
     pickAnother: "🎉 Anderen Beruf wählen",
     quoteOpen: "„", quoteClose: "“",
-    footer: "Made with AI &amp; ❤",
-    today: "Heute"
+    footer: "Made with AI &amp; ❤"
   },
   en: {
     brand: "AI Worklab · AI in everyday work",
@@ -463,8 +452,7 @@ const T = {
     nextTask: "Next task →",
     pickAnother: "🎉 Pick another profession",
     quoteOpen: "“", quoteClose: "”",
-    footer: "Made with AI &amp; ❤",
-    today: "Today"
+    footer: "Made with AI &amp; ❤"
   }
 };
 
@@ -1006,10 +994,6 @@ function renderHome(root) {
             el("h3", {}, `${p.name}, ${p.age}`),
             el("div", { class: "role" }, tr(p.role))
           )
-        ),
-        el("div", { class: "today" },
-          el("span", { class: "today-label" }, `${s.today}: `),
-          p.tasks.map(task => tr(task.title)).join(" · ")
         ),
         el("div", { class: "meta" },
           el("span", { class: "chip accent" }, tr(p.cluster)),
