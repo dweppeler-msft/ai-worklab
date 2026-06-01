@@ -1,0 +1,853 @@
+﻿<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<meta name="description" content="Interaktives Mini-Lab: Wie verändert KI den Arbeitsalltag in fünf Berufen? Aufgaben aus echten Situationen, drei Antworten, ein Aha-Moment." />
+<meta name="referrer" content="strict-origin-when-cross-origin" />
+<title>AI Worklab · KI im Arbeitsalltag</title>
+<link rel="canonical" href="https://dweppeler-msft.github.io/ai-worklab/" />
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23b11f4b'/%3E%3Ctext x='50%25' y='54%25' font-family='Segoe UI,Arial,sans-serif' font-size='34' font-weight='700' text-anchor='middle' fill='white' dominant-baseline='middle'%3EBL%3C/text%3E%3C/svg%3E" />
+<meta property="og:type" content="website" />
+<meta property="og:title" content="AI Worklab · KI im Arbeitsalltag" />
+<meta property="og:description" content="Fünf Berufe, je drei Mini-Aufgaben. Entscheide, wie KI klug eingesetzt wird – und sieh, wie es die Profis machen." />
+<meta property="og:url" content="https://dweppeler-msft.github.io/ai-worklab/" />
+<meta property="og:locale" content="de_DE" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content="AI Worklab · KI im Arbeitsalltag" />
+<meta name="twitter:description" content="Fünf Berufe, drei Mini-Aufgaben. Entscheide, wie KI klug eingesetzt wird." />
+<script>
+  (() => {
+    const param = new URLSearchParams(window.location.search).get("clawpilotTheme");
+    const theme =
+      param || (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    document.documentElement.setAttribute("data-theme", theme);
+  })();
+</script>
+<style>
+  :root {
+    color-scheme: light;
+    --cp-bg: #f7f4ef;
+    --cp-bg-elevated: #fcfbf8;
+    --cp-surface: #ffffff;
+    --cp-surface-soft: #f5f5f5;
+    --cp-border: #dedede;
+    --cp-border-strong: #919191;
+    --cp-text: #242424;
+    --cp-text-muted: #5c5c5c;
+    --cp-text-soft: #6f6f6f;
+    --cp-accent: #b11f4b;
+    --cp-accent-hover: #9a1a41;
+    --cp-accent-soft: rgba(177, 31, 75, 0.08);
+    --cp-accent-fg: #ffffff;
+    --cp-success: #16a34a;
+    --cp-danger: #dc2626;
+    --cp-warning: #f59e0b;
+    --cp-link: #0078d4;
+    --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.12);
+    --cp-overlay: rgba(255, 255, 255, 0.8);
+    --cp-panel: rgba(255, 255, 255, 0.86);
+    --cp-panel-strong: rgba(255, 255, 255, 0.96);
+    --cp-sheen: rgba(255, 255, 255, 0.55);
+    --cp-highlight: rgba(177, 31, 75, 0.12);
+  }
+  html[data-theme="dark"] {
+    color-scheme: dark;
+    --cp-bg: #3d3b3a;
+    --cp-bg-elevated: #343231;
+    --cp-surface: #292929;
+    --cp-surface-soft: #2e2e2e;
+    --cp-border: #474747;
+    --cp-border-strong: #5f5f5f;
+    --cp-text: #dedede;
+    --cp-text-muted: #919191;
+    --cp-text-soft: #b0b0b0;
+    --cp-accent: #fd8ea1;
+    --cp-accent-hover: #fb7b91;
+    --cp-accent-soft: rgba(253, 142, 161, 0.14);
+    --cp-accent-fg: #1a1a1a;
+    --cp-success: #4ade80;
+    --cp-danger: #f87171;
+    --cp-warning: #fbbf24;
+    --cp-link: #4da6ff;
+    --cp-shadow: 0 18px 48px rgba(0, 0, 0, 0.32);
+    --cp-overlay: rgba(41, 41, 41, 0.88);
+    --cp-panel: rgba(41, 41, 41, 0.72);
+    --cp-panel-strong: rgba(41, 41, 41, 0.96);
+    --cp-sheen: rgba(255, 255, 255, 0.04);
+    --cp-highlight: rgba(253, 142, 161, 0.12);
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: "Segoe UI", Aptos, Calibri, -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--cp-bg);
+    color: var(--cp-text);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    min-height: 100vh;
+  }
+  .app {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 20px 16px 80px;
+  }
+  header.brand {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  .brand-mark {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 600; color: var(--cp-text-muted);
+    font-size: 14px; letter-spacing: 0.02em;
+  }
+  .brand-dot {
+    width: 10px; height: 10px; border-radius: 999px;
+    background: var(--cp-accent);
+  }
+  .theme-toggle {
+    border: 1px solid var(--cp-border);
+    background: var(--cp-surface);
+    color: var(--cp-text-muted);
+    border-radius: 999px;
+    padding: 6px 12px;
+    font-size: 13px;
+    cursor: pointer;
+  }
+  h1 {
+    font-size: clamp(26px, 6vw, 34px);
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+  .sub {
+    color: var(--cp-text-muted);
+    font-size: 16px;
+    margin: 0 0 24px;
+  }
+  .card {
+    background: var(--cp-surface);
+    border: 1px solid var(--cp-border);
+    border-radius: 16px;
+    box-shadow: 0 0 2px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.14);
+    padding: 20px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  @media (min-width: 540px) {
+    .grid { grid-template-columns: 1fr 1fr; }
+  }
+  .persona-card {
+    cursor: pointer;
+    transition: transform 0.08s ease, border-color 0.15s ease;
+    display: flex; flex-direction: column; gap: 8px;
+  }
+  .persona-card:hover, .persona-card:focus-visible {
+    border-color: var(--cp-accent);
+    transform: translateY(-1px);
+    outline: none;
+  }
+  .persona-card .avatar {
+    width: 48px; height: 48px; border-radius: 999px;
+    background: var(--cp-accent-soft);
+    color: var(--cp-accent);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 18px;
+  }
+  .persona-card .row { display: flex; align-items: center; gap: 12px; }
+  .persona-card h3 { margin: 0; font-size: 17px; }
+  .persona-card .role { color: var(--cp-text-muted); font-size: 14px; }
+  .persona-card .meta {
+    display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;
+  }
+  .chip {
+    background: var(--cp-surface-soft);
+    border: 1px solid var(--cp-border);
+    color: var(--cp-text-muted);
+    border-radius: 999px;
+    padding: 2px 10px;
+    font-size: 12px;
+  }
+  .chip.accent {
+    background: var(--cp-accent-soft);
+    border-color: transparent;
+    color: var(--cp-accent);
+  }
+  .back {
+    background: none;
+    border: none;
+    color: var(--cp-text-muted);
+    padding: 0;
+    margin-bottom: 12px;
+    cursor: pointer;
+    font-size: 14px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .back:hover { color: var(--cp-accent); }
+  .persona-header { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
+  .persona-header .avatar { width: 56px; height: 56px; font-size: 22px; }
+  .persona-header h2 { margin: 0; font-size: 22px; }
+  .persona-header .role { color: var(--cp-text-muted); font-size: 14px; }
+  .persona-quote {
+    font-style: italic;
+    color: var(--cp-text-muted);
+    border-left: 3px solid var(--cp-accent);
+    padding: 4px 12px;
+    margin: 0 0 18px;
+    font-size: 15px;
+  }
+  .tasks {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .task-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 14px 16px;
+    border: 1px solid var(--cp-border);
+    border-radius: 12px;
+    background: var(--cp-surface);
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    font: inherit;
+    color: var(--cp-text);
+    transition: border-color 0.15s ease;
+  }
+  .task-item:hover { border-color: var(--cp-accent); }
+  .task-num {
+    width: 28px; height: 28px; border-radius: 999px;
+    background: var(--cp-surface-soft);
+    color: var(--cp-text-muted);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 600; font-size: 13px;
+    flex-shrink: 0;
+  }
+  .task-item.done .task-num {
+    background: var(--cp-success);
+    color: white;
+  }
+  .task-item .task-title { flex: 1; font-weight: 500; font-size: 15px; }
+  .task-item .arrow { color: var(--cp-text-soft); font-size: 18px; }
+  .progress-dots { display: flex; gap: 6px; margin-left: auto; }
+  .dot {
+    width: 8px; height: 8px; border-radius: 999px;
+    background: var(--cp-border);
+  }
+  .dot.done { background: var(--cp-success); }
+  .scenario {
+    color: var(--cp-text);
+    font-size: 16px;
+    line-height: 1.55;
+    background: var(--cp-surface-soft);
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin: 0 0 16px;
+  }
+  .question {
+    font-weight: 600;
+    font-size: 17px;
+    margin: 0 0 14px;
+  }
+  .options {
+    display: flex; flex-direction: column; gap: 10px;
+  }
+  .option {
+    text-align: left;
+    border: 1.5px solid var(--cp-border);
+    background: var(--cp-surface);
+    color: var(--cp-text);
+    padding: 14px 16px;
+    border-radius: 12px;
+    cursor: pointer;
+    font: inherit;
+    font-size: 15px;
+    display: flex; gap: 12px; align-items: flex-start;
+    transition: border-color 0.15s ease, background 0.15s ease;
+  }
+  .option:hover:not(:disabled) { border-color: var(--cp-accent); }
+  .option:disabled { cursor: default; }
+  .option .letter {
+    width: 26px; height: 26px; border-radius: 999px;
+    background: var(--cp-surface-soft);
+    color: var(--cp-text-muted);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 13px;
+    flex-shrink: 0;
+  }
+  .option.correct {
+    border-color: var(--cp-success);
+    background: rgba(22, 163, 74, 0.06);
+  }
+  .option.correct .letter { background: var(--cp-success); color: white; }
+  .option.wrong {
+    border-color: var(--cp-danger);
+    background: rgba(220, 38, 38, 0.05);
+  }
+  .option.wrong .letter { background: var(--cp-danger); color: white; }
+  .reveal {
+    margin-top: 18px;
+    padding: 16px;
+    background: var(--cp-accent-soft);
+    border-radius: 12px;
+    border-left: 3px solid var(--cp-accent);
+  }
+  .reveal h4 {
+    margin: 0 0 8px;
+    color: var(--cp-accent);
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+  .reveal p { margin: 0 0 8px; font-size: 15px; }
+  .reveal p:last-child { margin: 0; }
+  .reveal .takeaway {
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px dashed var(--cp-accent);
+    font-weight: 600;
+    color: var(--cp-accent);
+  }
+  .actions {
+    display: flex; gap: 10px; margin-top: 18px;
+    flex-wrap: wrap;
+  }
+  .btn {
+    border: 1px solid var(--cp-border);
+    background: var(--cp-surface);
+    color: var(--cp-text);
+    border-radius: 999px;
+    padding: 10px 18px;
+    font: inherit;
+    font-size: 14px;
+    cursor: pointer;
+    font-weight: 500;
+  }
+  .btn.primary {
+    background: var(--cp-accent);
+    color: var(--cp-accent-fg);
+    border-color: var(--cp-accent);
+  }
+  .btn.primary:hover { background: var(--cp-accent-hover); border-color: var(--cp-accent-hover); }
+  .btn:hover { border-color: var(--cp-accent); }
+  .hero {
+    background: var(--cp-surface);
+    border: 1px solid var(--cp-border);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 18px;
+  }
+  .hero p { margin: 0 0 12px; color: var(--cp-text-muted); }
+  .hero p:last-child { margin: 0; }
+  .hero ol { margin: 0 0 12px 18px; padding: 0; color: var(--cp-text-muted); }
+  .hero li { margin-bottom: 4px; }
+  .completion {
+    text-align: center;
+    padding: 32px 16px;
+  }
+  .completion .big {
+    font-size: 48px;
+    margin-bottom: 8px;
+  }
+  .completion h2 { margin: 0 0 8px; }
+  .completion p { color: var(--cp-text-muted); margin: 0 0 20px; }
+  .hidden { display: none !important; }
+  .pill {
+    display: inline-block;
+    background: var(--cp-accent);
+    color: var(--cp-accent-fg);
+    border-radius: 999px;
+    padding: 3px 10px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 6px;
+    vertical-align: middle;
+  }
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="brand">
+    <div class="brand-mark">
+      <span class="brand-dot"></span>
+      Beruf-Lab · KI im Arbeitsalltag
+    </div>
+    <button class="theme-toggle" id="themeBtn" aria-label="Theme wechseln">🌓 Theme</button>
+  </header>
+
+  <main id="view"></main>
+</div>
+
+<script>
+/* =========================
+   Daten: Personas + Aufgaben
+   ========================= */
+const PERSONAS = [
+  {
+    id: "mia",
+    initials: "MK",
+    name: "Mia Krüger",
+    age: 24,
+    role: "Kommunikationsdesignerin (B.A.)",
+    path: "Studium",
+    cluster: "Kreativ",
+    quote: "Frisch von der HAW München in eine kleine Werbeagentur. Heute: drei Kund:innen, ein Pitch, viel zu tun – und genau dafür liebt sie ihren Job.",
+    tasks: [
+      {
+        scenario: "Deine Chefin sagt am Morgen: »Heute Nachmittag haben wir den Pitch bei der Bio-Bäckerei. Bring fünf richtig starke Ideen für die Instagram-Kampagne mit.« Du willst keine 08/15-Vorschläge liefern, sondern etwas, das die Kundin wirklich überzeugt.",
+        question: "Wie nutzt du KI am klügsten?",
+        options: [
+          "Die KI fragen: »Mach mir 5 Ideen für Insta-Kampagne Bio-Bäckerei.« – Antwort 1:1 in die Präsentation kopieren.",
+          "Auf KI verzichten und 90 Min mit Stift & Papier brainstormen – das ist sowieso kreativer.",
+          "Du briefst die KI wie eine Praktikantin: Zielgruppe, Markenkern, drei Kampagnen, die du gut findest – und nutzt die Vorschläge als Sprungbrett für eigene Anpassungen."
+        ],
+        correct: 2,
+        reveal: "Mia liefert fünf richtig gute Ideen statt mittelmäßiger Schnellschüsse – und gewinnt den Pitch. Sie hat die KI **wie eine:n Junior-Kolleg:in gebrieft**: Wer ist die Zielgruppe? Was ist der Markenkern? Was gefällt mir an Marke X? Erst dann kommen brauchbare Ideen, die sie noch verfeinert hat.",
+        takeaway: "Gutes Briefing schlägt »Magic Prompt«. KI ist so gut wie der Kontext, den du ihr gibst."
+      },
+      {
+        scenario: "Der Kunde will drei Logo-Varianten: »frisch, modern, regional«. Du willst nicht drei beliebige Schnellschüsse abliefern, sondern Vorschläge, die wirklich überzeugen.",
+        question: "Was ist der smarte Workflow?",
+        options: [
+          "Zwei Stunden im Grafikprogramm allein zeichnen – nur so wird's wirklich »deins«.",
+          "KI generiert 20 Varianten in unterschiedlichen Stilen → du wählst die drei stärksten → schärfst sie im Grafikprogramm nach und passt Farben und Typo an.",
+          "Erstes KI-Bild generieren, exportieren, beim Kunden einreichen. Schnell und fertig."
+        ],
+        correct: 1,
+        reveal: "Mia generiert mit KI **20 Richtungen in 5 Minuten**, wählt drei aus, und nutzt die restliche Zeit für das, was Maschinen nicht können: **Markenpassung, Typografie-Feinheiten, Storytelling**.",
+        takeaway: "KI macht Quantität, du machst Qualität. Sie ersetzt nicht das Auge – sie spart dir die ersten 80%."
+      },
+      {
+        scenario: "Der Pitch ist auf Englisch. Du sprichst gut, aber Fachbegriffe wie »Markenwiedererkennung« oder »Konversionsrate« sitzen noch nicht sicher.",
+        question: "Wie bereitest du dich am besten vor?",
+        options: [
+          "Slides Wort für Wort mit einem Übersetzungs-Tool übersetzen, dann ablesen.",
+          "Du lässt die KI übersetzen, prüfst Fachbegriffe selbst und übst Aussprache und schwierige Sätze laut mit einer KI als Sprachcoach.",
+          "Drauf vertrauen, dass dein Schul-Englisch reicht. Improvisation gehört dazu."
+        ],
+        correct: 1,
+        reveal: "Mia nutzt KI nicht zum **Auswendiglernen**, sondern zum **Üben**. Sie spricht den Pitch 3x laut, lässt KI Feedback geben zu Aussprache und Tempo, und korrigiert Fachbegriffe gezielt.",
+        takeaway: "KI als persönliche Trainerin – nicht als Ersatz für eigenes Können, sondern als Verstärker."
+      }
+    ]
+  },
+  {
+    id: "jonas",
+    initials: "JM",
+    name: "Jonas Meier",
+    age: 29,
+    role: "Pflegefachkraft, Klinikum",
+    path: "Ausbildung",
+    cluster: "Sozial",
+    quote: "Frühschicht 6:30. Ich wollte Menschen helfen – nicht Formulare ausfüllen. Mal sehen, was KI heute davon möglich macht.",
+    tasks: [
+      {
+        scenario: "Am Ende deiner Schicht steht die Dokumentation für acht Patient:innen an. Du willst sie sorgfältig machen – und gleichzeitig genug Zeit am Bett haben, statt nur am Computer zu sitzen.",
+        question: "Was tust du?",
+        options: [
+          "Aus Erinnerung alles ins System tippen. Dauert 45 Min, aber so machen es alle.",
+          "Du hast während der Schicht kurze Sprachmemos aufgenommen – KI strukturiert sie pro Patient:in vor, du prüfst, ergänzt und unterschreibst.",
+          "Eine Kollegin aus der Nachtschicht bitten, das mitzumachen."
+        ],
+        correct: 1,
+        reveal: "Jonas hat schon **während der Visite** kurze Sprachmemos aufgenommen (»Frau Berger, Wunde heilt gut, Schmerzmittel reduziert«). KI macht daraus strukturierte Doku-Einträge, **er bleibt verantwortlich** – aber spart 30 Minuten täglich.",
+        takeaway: "KI nimmt dir den Tipp-Aufwand ab. Die Verantwortung und der Check bleiben beim Menschen."
+      },
+      {
+        scenario: "Die Tochter eines Patienten ruft an und spricht nur Türkisch. Es geht um die Medikation ihres Vaters, eine wichtige Information.",
+        question: "Wie gehst du vor?",
+        options: [
+          "Mit Händen, Füßen und einer Übersetzungs-App auf dem Handy versuchen, das Wichtigste rüberzubringen.",
+          "Du nutzt ein Live-Übersetzungs-Tool für das Telefonat – aber heikle medizinische Details lässt du später vom hauseigenen Dolmetscher-Dienst nochmal bestätigen.",
+          "Die komplette Diagnose von der KI ins Türkische übersetzen und ihr per Messenger schicken."
+        ],
+        correct: 1,
+        reveal: "Jonas nutzt KI für das **alltägliche Gespräch** – aber bei rechtlich/medizinisch heiklen Inhalten holt er zusätzlich einen echten Dolmetscher dazu. Doppelte Sicherheit.",
+        takeaway: "KI gut für 80% der Fälle. Bei den restlichen 20% (Recht, Medizin, Hochrisiko) lieber Mensch dazu."
+      },
+      {
+        scenario: "Schichtwechsel: Du übergibst an die Nachtschicht. 8 Patient:innen, jede:r mit eigener Geschichte.",
+        question: "Wie machst du die Übergabe?",
+        options: [
+          "Du druckst alle Akten aus und gehst sie durch – sicher ist sicher.",
+          "KI fasst aus den Akten zusammen – du nutzt die Zeit, um zu ergänzen, was nicht digital steht: Stimmung, Sorgen der Angehörigen, kleine Beobachtungen.",
+          "KI fasst zusammen, du liest die Zusammenfassung vor, fertig."
+        ],
+        correct: 1,
+        reveal: "KI übernimmt das **Faktische** (Vitalwerte, Medikamente, Befunde). Jonas konzentriert sich auf das **Menschliche** – genau das, was in keiner Akte steht und für gute Pflege entscheidend ist.",
+        takeaway: "Lass KI das machen, was sie gut kann. Du machst das, was nur Menschen können."
+      }
+    ]
+  },
+  {
+    id: "lina",
+    initials: "LB",
+    name: "Lina Bauer",
+    age: 26,
+    role: "Grundschullehrerin im Referendariat",
+    path: "Studium",
+    cluster: "Sozial",
+    quote: "3. Klasse, 24 Kinder, alle auf unterschiedlichem Stand. Plus Eltern, Konferenzen, Korrekturen. KI? Gerne, aber wo fängt man an?",
+    tasks: [
+      {
+        scenario: "Du brauchst für die nächste Stunde Matheaufgaben für die 3. Klasse zum Thema »Multiplikation bis 100«, etwa 30 Minuten Übungszeit für die Kinder.",
+        question: "Wie nutzt du KI sinnvoll?",
+        options: [
+          "Aus dem alten Schulbuch der Kollegin abschreiben – hat ja auch funktioniert.",
+          "Die KI bitten: »Mach mir 10 Matheaufgaben Klasse 3«, nehmen wie sie ist, kopieren, fertig.",
+          "Die KI mit Lehrplan, aktuellem Stand der Klasse und Schwierigkeitsstufen briefen – dann differenzierte Versionen für starke und schwächere Kinder bauen."
+        ],
+        correct: 2,
+        reveal: "Lina lässt die KI **drei Versionen** machen: leicht, mittel, anspruchsvoll. So bekommt jedes Kind Aufgaben, die zum eigenen Können passen – ohne dass Lina dafür Stunden investieren muss. **Differenzierung in 15 Minuten statt 2 Stunden.**",
+        takeaway: "KI macht Differenzierung machbar. Das ist ein echter Game-Changer für individuelles Lernen."
+      },
+      {
+        scenario: "Das Sportfest am Freitag fällt wegen Dauerregen aus. Du brauchst kurz vor Feierabend noch einen Elternbrief – freundlich und persönlich, nicht nur Standard.",
+        question: "Was ist die smarte Lösung?",
+        options: [
+          "KI schreibt den Brief komplett, du druckst und verteilst morgen.",
+          "KI macht den Entwurf, du fügst persönlichen Ton hinzu (»wir freuen uns alle auf den Nachholtermin«) und Schul-Spezifika (Lehrer:innen-Name, neuer Termin).",
+          "Du schreibst alles selbst – KI prüft nur die Rechtschreibung."
+        ],
+        correct: 1,
+        reveal: "Der KI-Entwurf gibt Struktur und Tonalität. Lina ergänzt **die 20%, die wirklich nach ihr klingen** – persönliche Anrede, Schul-Insider, ein Augenzwinkern. **In 5 Min statt 30 Min fertig.**",
+        takeaway: "KI macht den 80%-Entwurf. Dein Wert liegt in den 20%, die es zu *deinem* Brief machen."
+      },
+      {
+        scenario: "Bei einem Kind verschlechtern sich die Noten deutlich. Du willst ein gutes Elterngespräch führen, hast aber wenig Erfahrung mit solchen Situationen.",
+        question: "Was bringt dich am weitesten?",
+        options: [
+          "KI nach allgemeinen Tipps fragen und die abarbeiten.",
+          "Erst KI als Rollenspiel-Partnerin: Du übst das Gespräch zwei-drei Mal, bekommst Feedback zu Tonfall und schwierigen Stellen. Danach gehst du es noch einmal mit einer erfahrenen Kollegin durch, die die Familie und die Schule kennt.",
+          "Komplett alleine vorbereiten – KI hat in so heiklen Themen nichts verloren."
+        ],
+        correct: 1,
+        reveal: "Lina nutzt die KI als **ersten Sparringpartner**: spielt die Eltern, gibt Feedback zu Tonfall, schlägt Reformulierungen vor (»sag nicht ›Ihr Kind ist faul‹, sondern ›wir beobachten gerade…‹«). Den entscheidenden Schliff bekommt sie aber im Gespräch mit einer **erfahrenen Kollegin** – die kennt die Familie, die Untertöne, die kleinen Hinweise, die in keiner KI stecken. **Beides zusammen** macht sie für das Gespräch wirklich stark.",
+        takeaway: "KI ist eine gute erste Übungspartnerin. Für das, was menschliche Erfahrung wirklich ausmacht, brauchst du echte Menschen."
+      }
+    ]
+  },
+  {
+    id: "tobi",
+    initials: "TS",
+    name: "Tobi Schneider",
+    age: 22,
+    role: "Mechatroniker im Maschinenbau",
+    path: "Ausbildung",
+    cluster: "Technisch",
+    quote: "Halle 3, Schicht ab 7 Uhr. Maschinen warten nicht. Mein Werkzeugkasten ist gut sortiert – seit Neuestem auch mit KI drin.",
+    tasks: [
+      {
+        scenario: "Eine Produktionsanlage steht still. Auf dem Display: Fehlercode E-422. Im 800-Seiten-Handbuch zu suchen würde 20 Min dauern.",
+        question: "Wie reagierst du?",
+        options: [
+          "Handbuch raussuchen und Seite für Seite durchblättern.",
+          "Foto vom Display + Symptomen beschreiben + Anlagentyp angeben → KI macht Diagnose-Vorschläge, du prüfst und behebst.",
+          "Anlage neu starten und hoffen, dass es weg ist."
+        ],
+        correct: 1,
+        reveal: "Tobi macht ein Foto, schreibt »E-422, ungewöhnliches Klacken, läuft seit 3 Tagen warm« – KI liefert 3 wahrscheinliche Ursachen + Prüfschritte. **In 3 Min statt 20.** Den Fix führt er selbst aus, dokumentiert direkt.",
+        takeaway: "KI ist dein erster Diagnose-Helfer. Der Profi-Check und die Hände am Werkzeug bleiben bei dir."
+      },
+      {
+        scenario: "Schichtende. Du hast eine knifflige Reparatur gemacht und sollst der Spätschicht erklären, was passiert ist und worauf sie achten müssen.",
+        question: "Wie übergibst du?",
+        options: [
+          "Drei Stichpunkte handschriftlich auf einen Zettel, dranlegen.",
+          "Während der Arbeit Voice-Memos aufgenommen → KI strukturiert sie zu einer sauberen Übergabe-Doku mit Beobachtungen, Aktionen und Warnhinweisen → du prüfst und postest sie ins Team.",
+          "Ach, machen die Kollegen schon. Wozu Doku?"
+        ],
+        correct: 1,
+        reveal: "Tobi spricht zwischendurch in sein Handy: »Schraube 4 war locker, Lagertemperatur 78 Grad, Wartungsintervall verkürzen.« KI macht daraus eine **strukturierte Übergabe in 2 Min** – die Spätschicht weiß sofort Bescheid.",
+        takeaway: "Sprechen ist schneller als tippen. KI macht aus deinen Worten saubere Dokumentation."
+      },
+      {
+        scenario: "Ein Kunde fragt an: »Können Sie uns eine Sonderkonstruktion mit doppelter Belastbarkeit bauen?« Du brauchst eine erste technische Einschätzung.",
+        question: "Was ist der richtige Weg?",
+        options: [
+          "Per Hand rechnen, 2 Stunden investieren, dann dem Kunden antworten.",
+          "KI hilft bei Berechnung und Materialvorschlag, du gehst mit dem Entwurf zur Meisterin oder Ingenieur:in zur fachlichen Freigabe – und antwortest dem Kunden.",
+          "KI antwortet dem Kunden direkt – ihre Berechnungen sind eh genauer als deine."
+        ],
+        correct: 1,
+        reveal: "Tobi nutzt KI für eine **schnelle erste Einschätzung** von Berechnung und Materialvorschlag. Die technische Verantwortung gegenüber dem Kunden bleibt aber beim Meister oder bei der Ingenieurin – das ist Profi-Sache. So entstehen **schnelle Antworten ohne Haftungs-Risiko**.",
+        takeaway: "KI rechnet schnell und liefert eine Basis. Verantwortung kann sie nicht übernehmen – das macht eine Fachperson."
+      }
+    ]
+  },
+  {
+    id: "leyla",
+    initials: "LA",
+    name: "Leyla Aydın",
+    age: 23,
+    role: "Fachinformatikerin Systemintegration",
+    path: "Ausbildung",
+    cluster: "IT",
+    quote: "Mittelständler mit 400 Leuten, ich bin das IT-Team – zusammen mit meinem Chef. Heißt: alles vom Drucker bis zum Server. Und seit KI: erstaunlich entspannt.",
+    tasks: [
+      {
+        scenario: "Montag 8:00 Uhr. Du öffnest das Ticket-System: 17 neue Anfragen über das Wochenende. Drucker, Login-Probleme, »ein Programm stürzt ab«, ein Server-Alert.",
+        question: "Wie strukturierst du deinen Tag?",
+        options: [
+          "Reihenfolge des Eingangs abarbeiten – fair für alle.",
+          "KI lässt du Tickets nach Dringlichkeit priorisieren und ähnliche bündeln (»3x dasselbe VPN-Problem«) – du arbeitest fokussiert nach Cluster.",
+          "Auto-Responder an alle: »Wird bearbeitet« – dann erstmal Kaffee."
+        ],
+        correct: 1,
+        reveal: "KI markiert den Server-Alert als kritisch, bündelt die 3 VPN-Tickets (gleicher Fix), erkennt 2 Phishing-Mails als »Schulung statt Lösung nötig«. Leyla arbeitet **17 Tickets in 90 Min statt in 3 Stunden** ab.",
+        takeaway: "KI gibt dir Überblick. Priorisierung ist die wichtigste Skill im IT-Support – KI macht sie einfacher."
+      },
+      {
+        scenario: "Die Buchhaltung beschwert sich: »Das Tabellenkalkulationsprogramm stürzt ab beim Öffnen einer bestimmten Datei.« Die Fehlermeldung ist kryptisch und du hast das noch nie gesehen.",
+        question: "Wie gehst du vor?",
+        options: [
+          "Das Programm neu installieren und hoffen, dass es weg ist.",
+          "Der KI Fehlermeldung, Programm-Version, Größe der Datei und Kontext geben → Hypothesen und Test-Schritte bekommen → systematisch durchgehen.",
+          "Bei der Familie nachfragen, wer sich auskennt."
+        ],
+        correct: 1,
+        reveal: "KI vermutet **fehlerhafte verlinkte Datenquelle** – Leyla prüft, findet einen toten Pfad zu einer alten Netzwerk-Freigabe. **5 Min Diagnose statt 45 Min Trial & Error.** Sie dokumentiert sofort für die Wissensdatenbank.",
+        takeaway: "KI ist ein guter Hypothesen-Generator. Den Test musst du machen – aber du weißt sofort, wo du suchen sollst."
+      },
+      {
+        scenario: "Du hast einen cleveren Workaround für ein wiederkehrendes Problem gebaut. Kolleg:innen sollen das künftig selbst nutzen können – ohne dich jedes Mal zu fragen.",
+        question: "Wie erstellst du gute Doku?",
+        options: [
+          "Mündlich an die Kolleg:innen weitergeben, die das brauchen.",
+          "KI eine fertige Doku schreiben lassen und direkt veröffentlichen – KI ist ja im Schreiben gut.",
+          "Du schreibst Rohtext + machst Screenshots → KI strukturiert in Schritte, ergänzt Vorbedingungen → du fügst Edge Cases und »Was wenn schief geht« hinzu."
+        ],
+        correct: 2,
+        reveal: "KI strukturiert aus Leylas Rohtext eine **saubere Schritt-für-Schritt-Anleitung mit Screenshots**. Leyla ergänzt die Dinge, die KI nicht wissen kann: typische Fehler, was wenn schief geht, interne Besonderheiten. **Doku, die Kolleg:innen wirklich nutzen.**",
+        takeaway: "KI strukturiert und formatiert. Das Erfahrungswissen kommt von dir – das macht den Unterschied zwischen mittelmäßiger und richtig guter Doku."
+      }
+    ]
+  }
+];
+
+/* =========================
+   State + Routing
+   ========================= */
+const state = {
+  view: "home",      // home | persona | task | done
+  personaId: null,
+  taskIdx: 0,
+  // per-persona task completion: { personaId: Set(taskIdx) }
+  done: {}
+};
+
+function markDone(personaId, taskIdx) {
+  if (!state.done[personaId]) state.done[personaId] = new Set();
+  state.done[personaId].add(taskIdx);
+}
+function isDone(personaId, taskIdx) {
+  return state.done[personaId] && state.done[personaId].has(taskIdx);
+}
+function countDone(personaId) {
+  return state.done[personaId] ? state.done[personaId].size : 0;
+}
+
+function render() {
+  const view = document.getElementById("view");
+  view.innerHTML = "";
+  if (state.view === "home") renderHome(view);
+  else if (state.view === "persona") renderPersona(view);
+  else if (state.view === "task") renderTask(view);
+  try { window.scrollTo({ top: 0, behavior: "auto" }); } catch (_) { window.scrollTo(0, 0); }
+}
+
+function el(tag, attrs = {}, ...children) {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === "class") e.className = v;
+    else if (k === "html") e.innerHTML = v;
+    else if (k.startsWith("on") && typeof v === "function") e.addEventListener(k.slice(2), v);
+    else if (v !== false && v != null) e.setAttribute(k, v);
+  }
+  for (const c of children) {
+    if (c == null || c === false) continue;
+    if (typeof c === "string") e.appendChild(document.createTextNode(c));
+    else e.appendChild(c);
+  }
+  return e;
+}
+
+/* ---- Home ---- */
+function renderHome(root) {
+  root.appendChild(el("div", { class: "hero" },
+    el("h1", {}, "Wie verändert KI die Berufswelt?"),
+    el("p", { class: "sub" }, "Such dir einen Beruf aus und löse drei Mini-Aufgaben aus dem Arbeitsalltag. Du entscheidest, wie KI klug eingesetzt wird – und siehst dann, wie es die echten Profis machen."),
+    el("p", {}, el("strong", {}, "So funktioniert's:")),
+    el("ol", {},
+      el("li", {}, "Beruf wählen"),
+      el("li", {}, "Aufgabe lesen – im Team überlegen"),
+      el("li", {}, "Eure beste Antwort tippen"),
+      el("li", {}, "Lösung & Aha-Moment aufdecken"))
+  ));
+
+  root.appendChild(el("div", { class: "grid", id: "personaGrid" },
+    ...PERSONAS.map(p => {
+      const card = el("button", {
+        class: "persona-card card",
+        onclick: () => { state.personaId = p.id; state.view = "persona"; render(); }
+      },
+        el("div", { class: "row" },
+          el("div", { class: "avatar" }, p.initials),
+          el("div", {},
+            el("h3", {}, `${p.name}, ${p.age}`),
+            el("div", { class: "role" }, p.role)
+          )
+        ),
+        el("div", { class: "meta" },
+          el("span", { class: "chip accent" }, p.cluster),
+          el("span", { class: "chip" }, p.path)
+        )
+      );
+      return card;
+    })
+  ));
+}
+
+/* ---- Persona Detail ---- */
+function renderPersona(root) {
+  const p = PERSONAS.find(x => x.id === state.personaId);
+
+  root.appendChild(el("button", { class: "back", onclick: () => { state.view = "home"; render(); } },
+    "← Andere:n Beruf wählen"));
+
+  root.appendChild(el("div", { class: "card" },
+    el("div", { class: "persona-header" },
+      el("div", { class: "avatar" }, p.initials),
+      el("div", {},
+        el("h2", {}, `${p.name}, ${p.age}`),
+        el("div", { class: "role" }, `${p.role} · ${p.path}`)
+      )
+    ),
+    el("p", { class: "persona-quote" }, `„${p.quote}"`),
+
+    el("div", { class: "tasks" },
+      ...p.tasks.map((t, i) => {
+        const done = isDone(p.id, i);
+        return el("button", {
+          class: "task-item" + (done ? " done" : ""),
+          onclick: () => { state.taskIdx = i; state.view = "task"; render(); }
+        },
+          el("div", { class: "task-num" }, done ? "✓" : String(i + 1)),
+          el("div", { class: "task-title" }, `Aufgabe ${i + 1}`),
+          el("div", { class: "arrow" }, "›")
+        );
+      })
+    ),
+
+    countDone(p.id) === p.tasks.length
+      ? el("div", { class: "reveal", style: "margin-top:18px" },
+          el("h4", {}, "Alle Aufgaben gelöst!"),
+          el("p", {}, `Du hast ${p.name}s Arbeitstag mitgestaltet. Probier einen anderen Beruf oder geh zurück zur Übersicht.`)
+        )
+      : null
+  ));
+}
+
+/* ---- Task ---- */
+function renderTask(root) {
+  const p = PERSONAS.find(x => x.id === state.personaId);
+  const t = p.tasks[state.taskIdx];
+  let answered = false;
+  let chosen = null;
+
+  root.appendChild(el("button", { class: "back", onclick: () => { state.view = "persona"; render(); } },
+    `← ${p.name}s Tag`));
+
+  const persoBar = el("div", { style: "display:flex;align-items:center;gap:10px;margin-bottom:14px;" },
+    el("div", { class: "avatar", style: "width:32px;height:32px;font-size:13px;border-radius:999px;background:var(--cp-accent-soft);color:var(--cp-accent);display:flex;align-items:center;justify-content:center;font-weight:700" }, p.initials),
+    el("div", { style: "font-size:14px;color:var(--cp-text-muted)" },
+      el("strong", { style: "color:var(--cp-text)" }, p.name),
+      ` · Aufgabe ${state.taskIdx + 1} von ${p.tasks.length}`)
+  );
+  root.appendChild(persoBar);
+
+  const card = el("div", { class: "card" },
+    el("div", { class: "scenario" }, t.scenario),
+    el("p", { class: "question" }, t.question)
+  );
+
+  const letters = ["A", "B", "C"];
+  const optsWrap = el("div", { class: "options" });
+  const optionEls = [];
+  t.options.forEach((opt, i) => {
+    const oEl = el("button", {
+      class: "option",
+      onclick: () => choose(i)
+    },
+      el("div", { class: "letter" }, letters[i]),
+      el("div", {}, opt)
+    );
+    optionEls.push(oEl);
+    optsWrap.appendChild(oEl);
+  });
+  card.appendChild(optsWrap);
+
+  const revealMount = el("div");
+  card.appendChild(revealMount);
+
+  const actionsMount = el("div");
+  card.appendChild(actionsMount);
+
+  root.appendChild(card);
+
+  function choose(i) {
+    if (answered) return;
+    answered = true;
+    chosen = i;
+    optionEls.forEach((oel, idx) => {
+      oel.disabled = true;
+      if (idx === t.correct) oel.classList.add("correct");
+      else if (idx === i) oel.classList.add("wrong");
+    });
+
+    const isRight = i === t.correct;
+    const reveal = el("div", { class: "reveal" },
+      el("h4", {}, isRight ? "Richtig! So macht es " + p.name.split(" ")[0] : "Nicht ganz – so macht es " + p.name.split(" ")[0]),
+      el("p", { html: t.reveal }),
+      el("div", { class: "takeaway" }, "💡 " + t.takeaway)
+    );
+    revealMount.appendChild(reveal);
+
+    markDone(p.id, state.taskIdx);
+
+    const isLast = state.taskIdx === p.tasks.length - 1;
+    const actions = el("div", { class: "actions" });
+    if (!isLast) {
+      actions.appendChild(el("button", {
+        class: "btn primary",
+        onclick: () => { state.taskIdx++; render(); }
+      }, "Nächste Aufgabe →"));
+    } else {
+      actions.appendChild(el("button", {
+        class: "btn primary",
+        onclick: () => { state.view = "home"; render(); }
+      }, "🎉 Anderen Beruf wählen"));
+    }
+    actions.appendChild(el("button", {
+      class: "btn",
+      onclick: () => { state.view = "persona"; render(); }
+    }, "Zurück zu " + p.name.split(" ")[0]));
+    actionsMount.appendChild(actions);
+  }
+}
+
+/* ---- Theme toggle ---- */
+document.getElementById("themeBtn").addEventListener("click", () => {
+  const cur = document.documentElement.getAttribute("data-theme");
+  document.documentElement.setAttribute("data-theme", cur === "dark" ? "light" : "dark");
+});
+
+render();
+</script>
+</body>
+</html>
